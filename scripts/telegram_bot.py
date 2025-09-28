@@ -3,6 +3,7 @@ from modules.config import *
 from modules.telegram_int.add_geotag.add_geotag import ConversationHandler_add_geotag
 from io import BytesIO
 from datetime import datetime
+from modules.config.config import get_config_field
 from telegram import (
     Update
 )
@@ -26,6 +27,8 @@ async def my_geotags(update: Update, context: ContextTypes.DEFAULT_TYPE):
     User.safe_insert(telegram_id=update.effective_user.id)
     user = User(telegram_id=update.effective_user.id)
     geotags = user.geotags
+    if not geotags:
+        return
     for geotag in geotags:
         text = geotag.geotag + "\n" + geotag.about
         await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
@@ -44,7 +47,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def main():
-    token = "8240679768:AAHp-DRN0bmIxHB5BiFmo5vRZ_U0YSXidd4"
+    token = get_config_field("telegram_api_token")
     application = ApplicationBuilder().token(token).build()
 
     application.add_handler(CommandHandler('start', start))
