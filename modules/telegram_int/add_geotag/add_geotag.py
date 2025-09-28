@@ -38,7 +38,7 @@ async def description_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
     description = update.message.text
     user = User(telegram_id=update.effective_user.id)
     print(context.user_data["latitude"])
-    geotag = f"{context.user_data["latitude"]};{context.user_data["longitude"]}"
+    geotag = str(context.user_data["latitude"]) + ";" + str(context.user_data["longitude"])
     user.insert_geotag(geotag=geotag, about=description)
 
     await update.message.reply_text(f"Ваша геометка добавлена")
