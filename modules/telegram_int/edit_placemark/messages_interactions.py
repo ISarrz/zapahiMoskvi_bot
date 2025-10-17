@@ -9,14 +9,11 @@ from telegram import (
 )
 from telegram.ext import CallbackContext
 from modules.database.placemark.placemark import Placemark
-
-from modules.telegram_int.user_placemarks_menu.constants import *
-from modules.telegram_int.user_placemarks_menu.placemark_editor.sheets_generators import (
-    placemark_editor_get_categories_sheets,
-    placemark_editor_get_tags_sheets,
+from modules.telegram_int.constants import *
+from modules.telegram_int.edit_placemark.sheets_generators import (
+placemark_editor_get_categories_sheets,
+placemark_editor_get_tags_sheets
 )
-
-
 async def placemark_selector_send_placemarks_menu(update: Update, context: CallbackContext):
     sheets = placemark_selector_get_placemarks_sheets(User(telegram_id=update.effective_user.id))
     sheet = sheets[context.user_data['placemark_sheet']]

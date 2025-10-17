@@ -5,9 +5,7 @@ from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 )
-from modules.telegram_int.user_placemarks_menu.user_placemarks_menu import ConversationHandler_placemarks_editor
 from io import BytesIO
-from modules.telegram_int.notifications_editor.notifications_editor import ConversationHandler_notifications_editor
 from modules.database.log.log import Log
 from modules.time.time import now_data
 from modules.config.config import get_config_field
