@@ -1,4 +1,3 @@
-from modules.logger.logger import async_logger
 from telegram import (
     Update
 )
@@ -8,110 +7,110 @@ from telegram.ext import (
 )
 
 from modules.telegram_int.constants import *
-from modules.telegram_int.edit_placemark.sheets_generators import (
-    placemark_selector_get_placemarks_sheets
+from modules.telegram_int.edit_placemarks.sheets_generators import (
+    edit_placemarks_get_placemarks_sheets
 )
-from modules.telegram_int.edit_placemark.support_functions import (
-get_address
+from modules.telegram_int.edit_placemarks.support_functions import (
+    get_address
 )
-from modules.logger.logger import logger, async_logger
+from modules.logger.logger import  async_logger
 from modules.database.user.user import User
 from modules.database.placemark.placemark import Placemark
 from modules.database.placemark.category import Category
 from modules.database.placemark.tag import Tag
 
-from modules.telegram_int.edit_placemark.messages_interactions import (
-    placemark_editor_update_delete_menu,
-    placemark_editor_send_edit_menu,
-    placemark_editor_update_edit_menu,
-    placemark_editor_send_placemark_info_menu,
-    placemark_editor_update_placemark_info_menu,
-    placemark_editor_update_categories_menu,
-    placemark_editor_send_categories_menu,
-    placemark_editor_update_tags_menu,
-    placemark_editor_send_tags_menu,
-    placemark_selector_update_placemarks_menu,
-    placemark_selector_send_placemarks_menu,
+from modules.telegram_int.edit_placemarks.messages_interactions import (
+    edit_placemarks_update_delete_menu,
+    edit_placemarks_send_edit_menu,
+    edit_placemarks_update_edit_menu,
+    edit_placemarks_update_placemark_info_menu,
+    edit_placemarks_update_categories_menu,
+    edit_placemarks_update_tags_menu,
+    edit_placemarks_send_tags_menu,
+    edit_placemarks_placemark_selector_update_placemarks_menu,
+    edit_placemarks_placemark_selector_send_placemarks_menu,
 
 )
-from modules.telegram_int.edit_placemark.sheets_generators import (
-    placemark_editor_get_categories_sheets,
-    placemark_editor_get_tags_sheets,
+from modules.telegram_int.edit_placemarks.sheets_generators import (
+    edit_placemarks_get_categories_sheets,
+    edit_placemarks_get_tags_sheets,
 )
-
-
-async def edit_placemark_handler(update: Update, context: CallbackContext):
-    context.user_data['placemark_sheet'] = 0
-    await placemark_selector_send_placemarks_menu(update, context)
-
-
-    return PLACEMARK_SELECTOR_HANDLER
 
 
 @async_logger
-async def placemarks_selector_handler(update: Update, context: CallbackContext):
+async def edit_placemarks_handler(update: Update, context: CallbackContext):
+    context.user_data['placemark_sheet'] = 0
+    await edit_placemarks_placemark_selector_send_placemarks_menu(update, context)
+
+    return EDIT_PLACEMARKS_PLACEMARK_SELECTOR_HANDLER
+
+
+@async_logger
+async def edit_placemarks_placemarks_selector_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
     income = query.data
 
     if income == LEFT_ARROW:
         context.user_data['placemark_sheet'] -= 1
-        sheets = placemark_selector_get_placemarks_sheets(User(telegram_id=update.effective_user.id))
+        sheets = edit_placemarks_get_placemarks_sheets(User(telegram_id=update.effective_user.id))
         context.user_data['placemark_sheet'] += len(sheets)
         context.user_data['placemark_sheet'] %= len(sheets)
 
-        await placemark_selector_update_placemarks_menu(update, context)
+        await edit_placemarks_placemark_selector_update_placemarks_menu(update, context)
 
-        return PLACEMARK_SELECTOR_HANDLER
+        return EDIT_PLACEMARKS_PLACEMARK_SELECTOR_HANDLER
 
     elif income == RIGHT_ARROW:
         context.user_data['placemark_sheet'] += 1
-        sheets = placemark_selector_get_placemarks_sheets(User(telegram_id=update.effective_user.id))
+        sheets = edit_placemarks_get_placemarks_sheets(User(telegram_id=update.effective_user.id))
         context.user_data['placemark_sheet'] %= len(sheets)
 
-        await placemark_selector_update_placemarks_menu(update, context)
+        await edit_placemarks_placemark_selector_update_placemarks_menu(update, context)
 
-        return PLACEMARK_SELECTOR_HANDLER
+        return EDIT_PLACEMARKS_PLACEMARK_SELECTOR_HANDLER
 
     else:
         context.user_data['selected_placemark_id'] = int(income)
-        await placemark_editor_update_placemark_info_menu(update, context)
-        return PLACEMARK_EDITOR_HANDLER
+        await edit_placemarks_update_placemark_info_menu(update, context)
+        return EDIT_PLACEMARKS_HANDLER
 
 
-async def placemark_editor_handler(update: Update, context: CallbackContext):
+@async_logger
+async def edit_placemarks_menu_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
     income = query.data
 
     if income == BACK_ARROW:
-        await placemark_selector_update_placemarks_menu(update, context)
+        await edit_placemarks_placemark_selector_update_placemarks_menu(update, context)
 
-        return PLACEMARK_SELECTOR_HANDLER
+        return EDIT_PLACEMARKS_PLACEMARK_SELECTOR_HANDLER
 
     elif income == DELETE:
-        await placemark_editor_update_delete_menu(update, context)
+        await edit_placemarks_update_delete_menu(update, context)
 
-        return PLACEMARK_EDITOR_DELETE_HANDLER
+        return EDIT_PLACEMARKS_DELETE_HANDLER
 
     elif income == EDIT:
-        await placemark_editor_update_edit_menu(update, context)
+        await edit_placemarks_update_edit_menu(update, context)
 
-        return PLACEMARK_EDITOR_EDIT_MENU_HANDLER
+        return EDIT_PLACEMARKS_EDIT_MENU_HANDLER
 
-    await placemark_editor_update_placemark_info_menu(update, context)
+    await edit_placemarks_update_placemark_info_menu(update, context)
 
-    return PLACEMARK_SELECTOR_HANDLER
+    return EDIT_PLACEMARKS_PLACEMARK_SELECTOR_HANDLER
 
 
-async def placemark_editor_placemark_edit_menu_handler(update: Update, context: CallbackContext):
+@async_logger
+async def edit_placemarks_placemark_edit_menu_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
     income = query.data
 
     if income == BACK_ARROW:
-        await placemark_editor_update_placemark_info_menu(update, context)
-        return PLACEMARK_EDITOR_HANDLER
+        await edit_placemarks_update_placemark_info_menu(update, context)
+        return EDIT_PLACEMARKS_HANDLER
 
     elif income == "address":
         message = context.user_data['message']
@@ -122,7 +121,7 @@ async def placemark_editor_placemark_edit_menu_handler(update: Update, context: 
             reply_markup=None
         )
 
-        return PLACEMARK_EDITOR_ADDRESS_HANDLER
+        return EDIT_PLACEMARKS_ADDRESS_HANDLER
 
 
     elif income == "location":
@@ -134,7 +133,7 @@ async def placemark_editor_placemark_edit_menu_handler(update: Update, context: 
             reply_markup=None
         )
 
-        return PLACEMARK_EDITOR_LOCATION_HANDLER
+        return EDIT_PLACEMARKS_LOCATION_HANDLER
 
     elif income == "description":
         message = context.user_data['message']
@@ -145,7 +144,7 @@ async def placemark_editor_placemark_edit_menu_handler(update: Update, context: 
             reply_markup=None
         )
 
-        return PLACEMARK_EDITOR_DESCRIPTION_HANDLER
+        return EDIT_PLACEMARKS_DESCRIPTION_HANDLER
 
     elif income == "tags":
         context.user_data['tags'] = []
@@ -154,25 +153,25 @@ async def placemark_editor_placemark_edit_menu_handler(update: Update, context: 
             context.user_data['tags'].append(tag.id)
 
         context.user_data['categories_sheet'] = 0
-        await placemark_editor_update_categories_menu(update, context)
+        await edit_placemarks_update_categories_menu(update, context)
 
-        return PLACEMARK_EDITOR_CATEGORIES_HANDLER
+        return EDIT_PLACEMARKS_CATEGORIES_HANDLER
 
-    # await update_edit_menu(update, context)
-    # return PLACEMARKS_EDITOR_HANDLER
+    return ConversationHandler.END
 
-
-async def placemark_editor_placemark_edit_address_handler(update: Update, context: CallbackContext):
+@async_logger
+async def edit_placemarks_placemark_edit_address_handler(update: Update, context: CallbackContext):
     address = update.message.text
     placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
     placemark.address = address
 
-    await placemark_editor_send_edit_menu(update, context)
+    await edit_placemarks_send_edit_menu(update, context)
 
-    return PLACEMARK_EDITOR_EDIT_MENU_HANDLER
+    return EDIT_PLACEMARKS_EDIT_MENU_HANDLER
 
 
-async def placemark_editor_placemark_edit_location_handler(update: Update, context: CallbackContext):
+@async_logger
+async def edit_placemarks_placemark_edit_location_handler(update: Update, context: CallbackContext):
     location = update.message.location
     latitude = location.latitude
     longitude = location.longitude
@@ -181,44 +180,46 @@ async def placemark_editor_placemark_edit_location_handler(update: Update, conte
     placemark.longitude = longitude
     placemark.address = get_address(latitude, longitude)
 
-    await placemark_editor_send_edit_menu(update, context)
+    await edit_placemarks_send_edit_menu(update, context)
 
-    return PLACEMARK_EDITOR_EDIT_MENU_HANDLER
+    return EDIT_PLACEMARKS_EDIT_MENU_HANDLER
 
 
-async def placemark_editor_placemark_edit_description_handler(update: Update, context: CallbackContext):
+@async_logger
+async def edit_placemarks_placemark_edit_description_handler(update: Update, context: CallbackContext):
     description = update.message.text
     placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
     placemark.description = description
 
-    await placemark_editor_send_edit_menu(update, context)
+    await edit_placemarks_send_edit_menu(update, context)
 
-    return PLACEMARK_EDITOR_EDIT_MENU_HANDLER
+    return EDIT_PLACEMARKS_EDIT_MENU_HANDLER
 
 
-async def placemark_editor_categories_handler(update: Update, context: CallbackContext):
+@async_logger
+async def edit_placemarks_categories_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
     income = query.data
 
     if income == LEFT_ARROW:
-        sheets = await placemark_editor_get_categories_sheets(update, context)
+        sheets = await edit_placemarks_get_categories_sheets(update, context)
         context.user_data['categories_sheet'] -= 1
         context.user_data['categories_sheet'] += len(sheets)
         context.user_data['categories_sheet'] %= len(sheets)
 
-        await placemark_editor_update_categories_menu(update, context)
+        await edit_placemarks_update_categories_menu(update, context)
 
-        return PLACEMARK_EDITOR_CATEGORIES_HANDLER
+        return EDIT_PLACEMARKS_CATEGORIES_HANDLER
 
     elif income == RIGHT_ARROW:
-        sheets = await placemark_editor_get_categories_sheets(update, context)
+        sheets = await edit_placemarks_get_categories_sheets(update, context)
         context.user_data['categories_sheet'] += 1
         context.user_data['categories_sheet'] %= len(sheets)
 
-        await placemark_editor_update_categories_menu(update, context)
+        await edit_placemarks_update_categories_menu(update, context)
 
-        return PLACEMARK_EDITOR_CATEGORIES_HANDLER
+        return EDIT_PLACEMARKS_CATEGORIES_HANDLER
 
     elif income == "skip":
         placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
@@ -229,46 +230,47 @@ async def placemark_editor_categories_handler(update: Update, context: CallbackC
             tag = Tag(id=tag_id)
             placemark.insert_tag(tag)
 
-        await placemark_editor_update_edit_menu(update, context)
+        await edit_placemarks_update_edit_menu(update, context)
 
-        return PLACEMARK_EDITOR_EDIT_MENU_HANDLER
+        return EDIT_PLACEMARKS_EDIT_MENU_HANDLER
 
 
     else:
         context.user_data['category_id'] = int(income)
-        await placemark_editor_update_tags_menu(update, context)
+        await edit_placemarks_update_tags_menu(update, context)
 
-        return PLACEMARK_EDITOR_TAGS_HANDLER
+        return EDIT_PLACEMARKS_TAGS_HANDLER
 
 
-async def placemark_editor_tags_handler(update: Update, context: CallbackContext):
+@async_logger
+async def edit_placemarks_tags_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
     income = query.data
 
     if income == BACK_ARROW:
-        await placemark_editor_update_categories_menu(update, context)
+        await edit_placemarks_update_categories_menu(update, context)
 
         return PLACEMARK_INSERTER_CATEGORIES_HANDLER
 
     elif income == LEFT_ARROW:
-        sheets = await placemark_editor_get_tags_sheets(update, context)
+        sheets = await edit_placemarks_get_tags_sheets(update, context)
         context.user_data['tags_sheet'] -= 1
         context.user_data['tags_sheet'] += len(sheets)
         context.user_data['tags_sheet'] %= len(sheets)
 
-        await placemark_editor_update_tags_menu(update, context)
+        await edit_placemarks_update_tags_menu(update, context)
 
-        return PLACEMARK_EDITOR_TAGS_HANDLER
+        return EDIT_PLACEMARKS_TAGS_HANDLER
 
     elif income == RIGHT_ARROW:
-        sheets = await placemark_editor_get_tags_sheets(update, context)
+        sheets = await edit_placemarks_get_tags_sheets(update, context)
         context.user_data['tags_sheet'] += 1
         context.user_data['tags_sheet'] %= len(sheets)
 
-        await placemark_editor_update_tags_menu(update, context)
+        await edit_placemarks_update_tags_menu(update, context)
 
-        return PLACEMARK_EDITOR_TAGS_HANDLER
+        return EDIT_PLACEMARKS_TAGS_HANDLER
 
     elif income == "skip":
         placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
@@ -279,9 +281,9 @@ async def placemark_editor_tags_handler(update: Update, context: CallbackContext
             tag = Tag(id=tag_id)
             placemark.insert_tag(tag)
 
-        await placemark_editor_update_edit_menu(update, context)
+        await edit_placemarks_update_edit_menu(update, context)
 
-        return PLACEMARK_EDITOR_EDIT_MENU_HANDLER
+        return EDIT_PLACEMARKS_EDIT_MENU_HANDLER
 
     elif income == ADD:
         message = context.user_data['message']
@@ -293,7 +295,7 @@ async def placemark_editor_tags_handler(update: Update, context: CallbackContext
             reply_markup=None
         )
 
-        return PLACEMARK_EDITOR_INSERT_TAG_HANDLER
+        return EDIT_PLACEMARKS_INSERT_TAG_HANDLER
 
     else:
         if int(income) in context.user_data["tags"]:
@@ -302,12 +304,13 @@ async def placemark_editor_tags_handler(update: Update, context: CallbackContext
         else:
             context.user_data['tags'].append(int(income))
 
-        await placemark_editor_update_tags_menu(update, context)
+        await edit_placemarks_update_tags_menu(update, context)
 
-        return PLACEMARK_EDITOR_TAGS_HANDLER
+        return EDIT_PLACEMARKS_TAGS_HANDLER
 
 
-async def placemark_editor_insert_tag_handler(update: Update, context: CallbackContext):
+@async_logger
+async def edit_placemarks_insert_tag_handler(update: Update, context: CallbackContext):
     name = update.message.text
 
     user = User(telegram_id=int(update.effective_user.id))
@@ -315,13 +318,13 @@ async def placemark_editor_insert_tag_handler(update: Update, context: CallbackC
     category = Category(id=int(context.user_data['category_id']))
     tag.insert_category(category)
 
-    await placemark_editor_send_tags_menu(update, context)
+    await edit_placemarks_send_tags_menu(update, context)
 
-    return PLACEMARK_EDITOR_TAGS_HANDLER
+    return EDIT_PLACEMARKS_TAGS_HANDLER
 
 
 @async_logger
-async def placemark_editor_delete_menu_handler(update: Update, context: CallbackContext):
+async def edit_placemarks_delete_menu_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
     income = query.data
@@ -330,13 +333,13 @@ async def placemark_editor_delete_menu_handler(update: Update, context: Callback
         placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
         placemark.delete()
 
-        await placemark_selector_update_placemarks_menu(update, context)
+        await edit_placemarks_placemark_selector_update_placemarks_menu(update, context)
 
-        return PLACEMARK_SELECTOR_HANDLER
+        return EDIT_PLACEMARKS_PLACEMARK_SELECTOR_HANDLER
 
     elif income == CANCEL:
-        await placemark_editor_update_placemark_info_menu(update, context)
+        await edit_placemarks_update_placemark_info_menu(update, context)
 
-        return PLACEMARK_EDITOR_HANDLER
+        return EDIT_PLACEMARKS_HANDLER
 
     return ConversationHandler.END

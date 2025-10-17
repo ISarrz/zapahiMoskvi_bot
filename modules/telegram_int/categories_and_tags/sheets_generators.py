@@ -1,15 +1,13 @@
-from telegram import InlineKeyboardButton
 from telegram import (
     Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
 )
 from telegram.ext import CallbackContext
-from modules.telegram_int.admin_panel.constants import *
+from modules.telegram_int.constants import *
 from modules.database.placemark.category import Category
-from modules.database.user.user import User
 
-async def insert_category_and_tag_get_categories_sheets(update: Update, context: CallbackContext):
+async def categories_and_tags_get_categories_sheets(update: Update, context: CallbackContext):
     categories = Category.approved()
     sheets = []
     for category in categories:
@@ -22,13 +20,11 @@ async def insert_category_and_tag_get_categories_sheets(update: Update, context:
         if len(sheets) > 1:
             sheets[i].append([
                 InlineKeyboardButton(text=LEFT_ARROW, callback_data=LEFT_ARROW),
-                InlineKeyboardButton(text=BACK_ARROW, callback_data=BACK_ARROW),
                 InlineKeyboardButton(text = ADD, callback_data=ADD),
                 InlineKeyboardButton(text=RIGHT_ARROW, callback_data=RIGHT_ARROW),
             ])
         else:
             sheets[i].append([
-                InlineKeyboardButton(text=BACK_ARROW, callback_data=BACK_ARROW),
                 InlineKeyboardButton(text=ADD, callback_data=ADD),
             ])
 
@@ -36,7 +32,6 @@ async def insert_category_and_tag_get_categories_sheets(update: Update, context:
 
     if not sheets:
         sheets.append([[
-            InlineKeyboardButton(text=BACK_ARROW, callback_data=BACK_ARROW),
             InlineKeyboardButton(text=ADD, callback_data=ADD),
         ]])
         sheets[0] = InlineKeyboardMarkup(sheets[0])
@@ -44,7 +39,7 @@ async def insert_category_and_tag_get_categories_sheets(update: Update, context:
     return sheets
 
 
-async def insert_category_and_tag_get_tags_sheets(update: Update, context: CallbackContext):
+async def categories_and_tags_get_tags_sheets(update: Update, context: CallbackContext):
     category = Category(id=int(context.user_data['category_id']))
 
     tags = []

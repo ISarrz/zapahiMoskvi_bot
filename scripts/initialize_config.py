@@ -1,5 +1,4 @@
 import json
-import modules.database
 from modules.config.paths import config_path
 
 

@@ -62,6 +62,16 @@ class TagFetcher:
     @staticmethod
     def fetch_all() -> List[DbTag]:
         return TagFetcher.constructor(DB.fetch_many(DB.tags_table_name))
+    @staticmethod
+    def fetch_placemarks_by_tag(tag_id:int) -> List[int]:
+        info = DB.fetch_many(DB.placemarks_tags_table_name, tag_id=tag_id)
+        if not info:
+            return []
+        if not isinstance(info, list):
+            info = [info]
+
+        placemarks_ids=[row["placemark_id"] for row in info]
+        return placemarks_ids
 
     @staticmethod
     def fetch_category_id(tag_id: int) -> int:
@@ -153,6 +163,10 @@ class Tag:
     @property
     def user_id(self) -> int:
         return self._tag.user_id
+
+    @property
+    def placemarks_count(self)->int:
+        return len(TagFetcher.fetch_placemarks_by_tag(self.id))
 
     @property
     def status(self) -> str:

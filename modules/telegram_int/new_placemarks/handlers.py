@@ -1,13 +1,8 @@
-from telegram import Update
 from telegram.ext import CallbackContext, ConversationHandler
-from modules.logger.logger import async_logger
 from modules.database.user.user import User
-from modules.telegram_int.admin_panel.constants import *
-from modules.telegram_int.admin_panel.mode_selector.messages_interactions import (
-    mode_selector_update_menu
-)
+from modules.telegram_int.constants import *
 
-from modules.telegram_int.admin_panel.new_placemarks.sheets_generators import (
+from modules.telegram_int.new_placemarks.sheets_generators import (
     new_placemarks_get_placemarks_sheets,
     new_placemarks_get_placemark_new_tags_sheets
 )
@@ -16,23 +11,28 @@ from telegram import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
 )
-from modules.telegram_int.admin_panel.new_placemarks.messages_interactions import (
+from modules.telegram_int.new_placemarks.messages_interactions import (
     new_placemarks_update_placemarks_menu,
     new_placemarks_update_placemark_menu,
     new_placemarks_update_placemark_edit_menu,
     new_placemarks_send_placemark_edit_menu,
     new_placemarks_update_tags_menu,
-    new_placemarks_update_tags_menu,
     new_placemarks_update_tag_menu,
-    new_placemarks_send_tag_menu
+    new_placemarks_send_tag_menu,
+    new_placemarks_send_placemarks_menu
 
 )
 from modules.database.placemark.tag import Tag
-from modules.telegram_int.admin_panel.new_placemarks.support_functions import get_address
+from modules.telegram_int.new_placemarks.support_functions import get_address
 from modules.database.placemark.placemark import Placemark
 
 
-@async_logger
+async def new_placemarks_handler(update: Update, context: CallbackContext):
+    context.user_data['new_placemarks_sheet'] = 0
+    await new_placemarks_send_placemarks_menu(update, context)
+    return NEW_PLACEMARKS_HANDLER
+
+
 async def new_placemarks_selector_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
@@ -57,10 +57,7 @@ async def new_placemarks_selector_handler(update: Update, context: CallbackConte
 
         return NEW_PLACEMARKS_HANDLER
 
-    elif income == BACK_ARROW:
-        await mode_selector_update_menu(update, context)
 
-        return MODE_SELECTOR_HANDLER
 
     else:
         context.user_data['placemark_changed'] = False
@@ -70,7 +67,6 @@ async def new_placemarks_selector_handler(update: Update, context: CallbackConte
         return NEW_PLACEMARKS_PLACEMARK_MENU_HANDLER
 
 
-@async_logger
 async def new_placemarks_placemark_menu_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
@@ -88,8 +84,12 @@ async def new_placemarks_placemark_menu_handler(update: Update, context: Callbac
             InlineKeyboardButton(text=SUBMIT, callback_data=SUBMIT),
             InlineKeyboardButton(text=CANCEL, callback_data=CANCEL),
         ]]
-        reply_markup = InlineKeyboardMarkup(sheet)
-        message = context.user_data['admin_panel_message']
+        if sheet:
+            reply_markup = InlineKeyboardMarkup(sheet)
+        else:
+            reply_markup = None
+
+        message = context.user_data['message']
         await context.bot.edit_message_text(
             chat_id=message.chat.id,
             message_id=message.message_id,
@@ -133,11 +133,11 @@ async def new_placemarks_placemark_approve_handler(update: Update, context: Call
         return NEW_PLACEMARKS_PLACEMARK_MENU_HANDLER
 
 
-@async_logger
 async def new_placemarks_placemark_edit_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
     income = query.data
+    placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
 
     if income == BACK_ARROW:
         await new_placemarks_update_placemark_menu(update, context)
@@ -150,29 +150,31 @@ async def new_placemarks_placemark_edit_handler(update: Update, context: Callbac
         return NEW_PLACEMARKS_PLACEMARK_NEW_TAGS_HANDLER
 
     elif income == "address":
-        message = context.user_data['admin_panel_message']
+        message = context.user_data['message']
         await context.bot.edit_message_text(
             chat_id=message.chat.id,
             message_id=message.message_id,
-            text="Введите адресс",
-            reply_markup=None
+            text="`" + placemark.address + "`" + "\n\nВведите адресс",
+            reply_markup=None,
+            parse_mode="MarkdownV2"
         )
 
         return NEW_PLACEMARKS_PLACEMARK_EDIT_ADDRESS_HANDLER
 
     elif income == "description":
-        message = context.user_data['admin_panel_message']
+        message = context.user_data['message']
         await context.bot.edit_message_text(
             chat_id=message.chat.id,
             message_id=message.message_id,
-            text="Введите описание",
-            reply_markup=None
+            text="`" + placemark.description + "`" + "\n\nВведите описание",
+            reply_markup=None,
+            parse_mode="MarkdownV2"
         )
 
         return NEW_PLACEMARKS_PLACEMARK_EDIT_DESCRIPTION_HANDLER
 
     elif income == "geotag":
-        message = context.user_data['admin_panel_message']
+        message = context.user_data['message']
         await context.bot.edit_message_text(
             chat_id=message.chat.id,
             message_id=message.message_id,
@@ -190,7 +192,7 @@ async def new_placemarks_placemark_edit_handler(update: Update, context: Callbac
             InlineKeyboardButton(text=CANCEL, callback_data=CANCEL),
         ]]
         reply_markup = InlineKeyboardMarkup(sheet)
-        message = context.user_data['admin_panel_message']
+        message = context.user_data['message']
         await context.bot.edit_message_text(
             chat_id=message.chat.id,
             message_id=message.message_id,
@@ -214,7 +216,7 @@ async def new_placemarks_placemark_edit_location_handler(update: Update, context
     placemark.address = get_address(latitude, longitude)
 
     context.user_data['placemark_changed'] = True
-    message = context.user_data['admin_panel_message']
+    message = context.user_data['message']
 
     await new_placemarks_send_placemark_edit_menu(update, context)
     return NEW_PLACEMARKS_PLACEMARK_EDIT_HANDLER
@@ -226,7 +228,7 @@ async def new_placemarks_placemark_edit_address_handler(update: Update, context:
     placemark.address = address
 
     context.user_data['placemark_changed'] = True
-    message = context.user_data['admin_panel_message']
+    message = context.user_data['message']
 
     await new_placemarks_send_placemark_edit_menu(update, context)
     return NEW_PLACEMARKS_PLACEMARK_EDIT_HANDLER
@@ -238,7 +240,7 @@ async def new_placemarks_placemark_edit_description_handler(update: Update, cont
     placemark.description = description
 
     context.user_data['placemark_changed'] = True
-    message = context.user_data['admin_panel_message']
+    message = context.user_data['message']
 
     await new_placemarks_send_placemark_edit_menu(update, context)
     return NEW_PLACEMARKS_PLACEMARK_EDIT_HANDLER
@@ -278,7 +280,7 @@ async def new_placemarks_tags_menu_handler(update: Update, context: CallbackCont
         context.user_data['tags_sheet'] %= len(sheets)
         await new_placemarks_update_tags_menu(update, context)
 
-        return NEW_TAGS_TAGS_MENU_HANDLER
+        return NEW_PLACEMARKS_PLACEMARK_NEW_TAGS_HANDLER
 
     elif income == RIGHT_ARROW:
         sheets = await new_placemarks_get_placemark_new_tags_sheets(update, context)
@@ -286,7 +288,7 @@ async def new_placemarks_tags_menu_handler(update: Update, context: CallbackCont
         context.user_data['tags_sheet'] %= len(sheets)
         await new_placemarks_update_tags_menu(update, context)
 
-        return NEW_TAGS_TAGS_MENU_HANDLER
+        return NEW_PLACEMARKS_PLACEMARK_NEW_TAGS_HANDLER
 
     else:
         context.user_data['tag_id'] = int(income)
@@ -303,7 +305,7 @@ async def new_placemarks_tag_menu_handler(update: Update, context: CallbackConte
     if income == EDIT:
         tag = Tag(id=int(context.user_data['tag_id']))
 
-        message = context.user_data['admin_panel_message']
+        message = context.user_data['message']
         await context.bot.edit_message_text(
             chat_id=message.chat.id,
             message_id=message.message_id,
@@ -326,7 +328,7 @@ async def new_placemarks_tag_menu_handler(update: Update, context: CallbackConte
             InlineKeyboardButton(text=CANCEL, callback_data=CANCEL),
         ]]
         reply_markup = InlineKeyboardMarkup(sheet)
-        message = context.user_data['admin_panel_message']
+        message = context.user_data['message']
         await context.bot.edit_message_text(
             chat_id=message.chat.id,
             message_id=message.message_id,
@@ -344,7 +346,7 @@ async def new_placemarks_tag_menu_handler(update: Update, context: CallbackConte
             InlineKeyboardButton(text=CANCEL, callback_data=CANCEL),
         ]]
         reply_markup = InlineKeyboardMarkup(sheet)
-        message = context.user_data['admin_panel_message']
+        message = context.user_data['message']
         await context.bot.edit_message_text(
             chat_id=message.chat.id,
             message_id=message.message_id,
@@ -354,7 +356,7 @@ async def new_placemarks_tag_menu_handler(update: Update, context: CallbackConte
 
         return NEW_PLACEMARKS_PLACEMARK_NEW_TAG_DELETE_HANDLER
 
-
+    return ConversationHandler.END
 async def new_placemarks_tag_edit_handler(update: Update, context: CallbackContext):
     name = update.message.text
     tag = Tag(id=int(context.user_data['tag_id']))

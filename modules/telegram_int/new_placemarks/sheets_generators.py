@@ -1,24 +1,48 @@
-from telegram import InlineKeyboardButton
+from modules.database.placemark.placemark import Placemark
+from modules.telegram_int.constants import *
 from telegram import (
     Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
+
 )
 from telegram.ext import CallbackContext
-from modules.telegram_int.admin_panel.constants import *
-from modules.database.placemark.category import Category
-from modules.database.placemark.tag import Tag
-from modules.database.user.user import User
 
 
-async def new_tags_get_tags_sheets(update: Update, context: CallbackContext):
-    tags = Tag.pending()
+def new_placemarks_get_placemarks_sheets():
+    placemarks = Placemark.get_pending()
+
+    sheets = []
+
+    for placemark in placemarks:
+        if not sheets or len(sheets[-1]) >= MAX_SHEET_LENGTH:
+            sheets.append([])
+
+        sheets[-1].append([InlineKeyboardButton(text=placemark.address, callback_data=placemark.id)])
+
+    for i in range(len(sheets)):
+        sheet = sheets[i]
+        if len(sheets) > 1:
+            sheet.append([
+                InlineKeyboardButton(text=LEFT_ARROW, callback_data=LEFT_ARROW),
+                InlineKeyboardButton(text=RIGHT_ARROW, callback_data=RIGHT_ARROW)
+            ])
+
+    if not sheets:
+        return [None]
+
+    return sheets
+
+
+async def new_placemarks_get_placemark_new_tags_sheets(update: Update, context: CallbackContext):
+    placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
+    tags = [tag for tag in placemark.tags if tag.status == "pending"]
 
     sheets = []
     for tag in tags:
         if not sheets or len(sheets[-1]) >= MAX_CATEGORIES_SHEET_LENGTH:
             sheets.append([])
-        text  = tag.name
+        text = tag.name
 
         sheets[-1].append([InlineKeyboardButton(text=text, callback_data=tag.id)])
 

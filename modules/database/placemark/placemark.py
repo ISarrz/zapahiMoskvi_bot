@@ -278,6 +278,10 @@ class Placemark:
         return Placemark(id=placemark_id)
 
     def delete(self):
+        tags = self.tags
+        for tag in self.tags:
+            if tag.status == "pending" and tag.placemarks_count == 1:
+                tag.delete()
         PlacemarkDeleter.delete(self._placemark)
 
 

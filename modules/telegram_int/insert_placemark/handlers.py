@@ -1,15 +1,11 @@
-from telegram import Update
-from telegram.ext import (
-    CallbackContext,
-    ConversationHandler
-)
+from telegram.ext import CallbackContext
 from modules.database.placemark.category import Category
 from modules.database.placemark.tag import Tag
 from modules.database.user.user import User
 from modules.telegram_int.constants import *
 from modules.telegram_int.insert_placemark.support_functions import get_address
 from modules.telegram_int.insert_placemark.support_functions import insert_user_placemark
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 
 from modules.telegram_int.insert_placemark.sheets_generators import (
     placemark_inserter_get_tags_sheets,
@@ -23,17 +19,19 @@ from modules.telegram_int.insert_placemark.messages_interactions import (
     placemark_inserter_update_categories_menu,
     placemark_inserter_send_categories_menu,
     placemark_inserter_send_tags_menu,
-    placemark_inserter_update_menu,
     placemark_inserter_send_menu
 )
+from modules.logger.logger import async_logger
 
 
+@async_logger
 async def insert_placemark_handler(update: Update, context: CallbackContext) -> int:
     await placemark_inserter_send_menu(update, context)
 
     return PLACEMARK_INSERTER_LOCATION_HANDLER
 
 
+@async_logger
 async def insert_placemark_location_handler(update: Update, context: CallbackContext):
     location = update.message.location
     latitude = location.latitude
@@ -57,6 +55,7 @@ async def insert_placemark_location_handler(update: Update, context: CallbackCon
     return PLACEMARK_INSERTER_DESCRIPTION_HANDLER
 
 
+@async_logger
 async def insert_placemark_description_handler(update: Update, context: CallbackContext):
     description = update.message.text
     context.user_data["description"] = description
@@ -66,6 +65,7 @@ async def insert_placemark_description_handler(update: Update, context: Callback
     return PLACEMARK_INSERTER_CATEGORIES_HANDLER
 
 
+@async_logger
 async def insert_placemark_categories_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
@@ -104,6 +104,7 @@ async def insert_placemark_categories_handler(update: Update, context: CallbackC
         return PLACEMARK_INSERTER_TAGS_HANDLER
 
 
+@async_logger
 async def insert_placemark_tags_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
@@ -165,6 +166,7 @@ async def insert_placemark_tags_handler(update: Update, context: CallbackContext
         return PLACEMARK_INSERTER_TAGS_HANDLER
 
 
+@async_logger
 async def insert_placemark_insert_tag_handler(update: Update, context: CallbackContext):
     name = update.message.text
 

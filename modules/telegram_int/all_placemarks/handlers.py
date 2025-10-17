@@ -1,9 +1,10 @@
 from modules.telegram_int.constants import *
 from telegram import Update
 from telegram.ext import CallbackContext
+from modules.logger.logger import async_logger
 
+@async_logger
 async def all_placemarks_handler(update: Update, context: CallbackContext) -> int:
-
     text = "ССЫЛКА"
 
     await context.bot.send_message(

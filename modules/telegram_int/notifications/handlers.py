@@ -3,14 +3,7 @@ from telegram import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
 )
-from telegram.ext import (
-    ContextTypes,
-    ConversationHandler,
-    CommandHandler,
-    CallbackQueryHandler,
-    MessageHandler,
-    filters, CallbackContext
-)
+from telegram.ext import CallbackContext
 
 from modules.database.user.notification import Notification
 from modules.logger.logger import logger, async_logger
@@ -43,7 +36,7 @@ def get_weekdays_sheet():
 
 
 @async_logger
-async def notifications_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def notifications_handler(update: Update, context: CallbackContext):
     User.safe_insert(update.effective_chat.id)
 
     await send_weekdays(update, context)
@@ -74,7 +67,7 @@ async def update_weekdays(update: Update, context: CallbackContext):
 
 
 @async_logger
-async def weekdays_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def weekdays_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
     income = query.data
@@ -84,7 +77,7 @@ async def weekdays_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return HOURS_HANDLER
 
 
-async def update_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def update_time(update: Update, context: CallbackContext):
     message = context.user_data['message']
     sheet = get_time_sheet(User(telegram_id=update.effective_chat.id), context)
     reply_markup = InlineKeyboardMarkup(sheet)
@@ -97,7 +90,7 @@ async def update_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 @async_logger
-async def time_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def time_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
     income = query.data
@@ -143,7 +136,7 @@ def get_time_inline_button(user: User, weekday: int, time):
 
 
 @logger
-def get_time_sheet(user: User, context: ContextTypes.DEFAULT_TYPE):
+def get_time_sheet(user: User, context: CallbackContext):
     notifications = user.notifications
     weekday = int(context.user_data['weekday'])
     keyboard = [

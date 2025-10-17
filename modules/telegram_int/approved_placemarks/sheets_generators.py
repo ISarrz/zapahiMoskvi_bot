@@ -1,7 +1,6 @@
 from telegram import InlineKeyboardButton
-from modules.database.user.user import User
 from modules.database.placemark.placemark import Placemark
-from modules.telegram_int.admin_panel.constants import *
+from modules.telegram_int.constants import *
 
 
 def approved_placemarks_get_placemarks_sheets():
@@ -23,11 +22,10 @@ def approved_placemarks_get_placemarks_sheets():
         if len(sheets) > 1:
             sheet.append([
                 InlineKeyboardButton(text=LEFT_ARROW, callback_data=LEFT_ARROW),
-                InlineKeyboardButton(text=BACK_ARROW, callback_data=BACK_ARROW),
                 InlineKeyboardButton(text=RIGHT_ARROW, callback_data=RIGHT_ARROW)
             ])
-        else:
-            sheet.append([InlineKeyboardButton(text=BACK_ARROW, callback_data=BACK_ARROW)])
 
 
+    if not sheets:
+        return [None]
     return sheets

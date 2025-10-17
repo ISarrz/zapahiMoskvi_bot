@@ -7,7 +7,7 @@ from modules.time.time import now
 from geopy.geocoders import Nominatim
 
 
-def get_address(latitude: int, longitude: int):
+def get_address(latitude: float, longitude: float):
     geolocator = Nominatim(user_agent="my_geocoder")
 
     location = geolocator.reverse((latitude, longitude), language="ru")

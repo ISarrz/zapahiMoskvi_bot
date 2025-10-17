@@ -1,6 +1,6 @@
 from modules.database.user.user import User
-from modules.telegram_int.edit_placemark.sheets_generators import (
-    placemark_selector_get_placemarks_sheets
+from modules.telegram_int.edit_placemarks.sheets_generators import (
+    edit_placemarks_get_placemarks_sheets
 )
 from telegram import (
     Update,
@@ -10,12 +10,12 @@ from telegram import (
 from telegram.ext import CallbackContext
 from modules.database.placemark.placemark import Placemark
 from modules.telegram_int.constants import *
-from modules.telegram_int.edit_placemark.sheets_generators import (
-placemark_editor_get_categories_sheets,
-placemark_editor_get_tags_sheets
+from modules.telegram_int.edit_placemarks.sheets_generators import (
+    edit_placemarks_get_categories_sheets,
+    edit_placemarks_get_tags_sheets
 )
-async def placemark_selector_send_placemarks_menu(update: Update, context: CallbackContext):
-    sheets = placemark_selector_get_placemarks_sheets(User(telegram_id=update.effective_user.id))
+async def edit_placemarks_placemark_selector_send_placemarks_menu(update: Update, context: CallbackContext):
+    sheets = edit_placemarks_get_placemarks_sheets(User(telegram_id=update.effective_user.id))
     sheet = sheets[context.user_data['placemark_sheet']]
     if sheet:
         reply_markup = InlineKeyboardMarkup(sheet)
@@ -36,8 +36,8 @@ async def placemark_selector_send_placemarks_menu(update: Update, context: Callb
     context.user_data['message'] = message
 
 
-async def placemark_selector_update_placemarks_menu(update: Update, context: CallbackContext):
-    sheets = placemark_selector_get_placemarks_sheets(User(telegram_id=update.effective_user.id))
+async def edit_placemarks_placemark_selector_update_placemarks_menu(update: Update, context: CallbackContext):
+    sheets = edit_placemarks_get_placemarks_sheets(User(telegram_id=update.effective_user.id))
     sheet = sheets[context.user_data['placemark_sheet']]
     if sheet:
         reply_markup = InlineKeyboardMarkup(sheet)
@@ -58,7 +58,7 @@ async def placemark_selector_update_placemarks_menu(update: Update, context: Cal
     )
 
 
-async def placemark_editor_update_placemark_info_menu(update: Update, context: CallbackContext):
+async def edit_placemarks_update_placemark_info_menu(update: Update, context: CallbackContext):
     message = context.user_data['message']
     placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
     text = ""
@@ -86,7 +86,7 @@ async def placemark_editor_update_placemark_info_menu(update: Update, context: C
     )
 
 
-async def placemark_editor_send_placemark_info_menu(update: Update, context: CallbackContext):
+async def edit_placemarks_send_placemark_info_menu(update: Update, context: CallbackContext):
     placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
     text = ""
     text += "Адресс: " + str(placemark.address) + "\n"
@@ -114,7 +114,7 @@ async def placemark_editor_send_placemark_info_menu(update: Update, context: Cal
     context.user_data['message'] = message
 
 
-async def placemark_editor_update_delete_menu(update: Update, context: CallbackContext):
+async def edit_placemarks_update_delete_menu(update: Update, context: CallbackContext):
     message = context.user_data['message']
     text = "Удалить метку?"
     keyboard = [
@@ -133,7 +133,7 @@ async def placemark_editor_update_delete_menu(update: Update, context: CallbackC
     )
 
 
-async def placemark_editor_update_edit_menu(update: Update, context: CallbackContext):
+async def edit_placemarks_update_edit_menu(update: Update, context: CallbackContext):
     message = context.user_data['message']
     placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
     text = ""
@@ -166,7 +166,7 @@ async def placemark_editor_update_edit_menu(update: Update, context: CallbackCon
     )
 
 
-async def placemark_editor_send_edit_menu(update: Update, context: CallbackContext):
+async def edit_placemarks_send_edit_menu(update: Update, context: CallbackContext):
     placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
     text = ""
     text += "Адресс: " + str(placemark.address) + "\n"
@@ -197,10 +197,10 @@ async def placemark_editor_send_edit_menu(update: Update, context: CallbackConte
     )
 
 
-async def placemark_editor_send_categories_menu(update: Update, context: CallbackContext):
+async def edit_placemarks_send_categories_menu(update: Update, context: CallbackContext):
     context.user_data['tags_sheet'] = 0
     context.user_data['categories_sheet'] = 0
-    sheets = await placemark_editor_get_categories_sheets(update, context)
+    sheets = await edit_placemarks_get_categories_sheets(update, context)
     sheet = sheets[0]
 
     message = await context.bot.send_message(
@@ -212,8 +212,8 @@ async def placemark_editor_send_categories_menu(update: Update, context: Callbac
     context.user_data['message'] = message
 
 
-async def placemark_editor_update_categories_menu(update: Update, context: CallbackContext):
-    sheets = await placemark_editor_get_categories_sheets(update, context)
+async def edit_placemarks_update_categories_menu(update: Update, context: CallbackContext):
+    sheets = await edit_placemarks_get_categories_sheets(update, context)
     sheet = sheets[int(context.user_data['categories_sheet'])]
     context.user_data['tags_sheet'] = 0
 
@@ -229,8 +229,8 @@ async def placemark_editor_update_categories_menu(update: Update, context: Callb
     )
 
 
-async def placemark_editor_update_tags_menu(update: Update, context: CallbackContext):
-    sheets = await placemark_editor_get_tags_sheets(update, context)
+async def edit_placemarks_update_tags_menu(update: Update, context: CallbackContext):
+    sheets = await edit_placemarks_get_tags_sheets(update, context)
     sheet = sheets[int(context.user_data['tags_sheet'])]
 
     text = "Выберите тег или создайте свой, добавление тега можно пропустить"
@@ -245,8 +245,8 @@ async def placemark_editor_update_tags_menu(update: Update, context: CallbackCon
     )
 
 
-async def placemark_editor_send_tags_menu(update: Update, context: CallbackContext):
-    sheets = await placemark_editor_get_tags_sheets(update, context)
+async def edit_placemarks_send_tags_menu(update: Update, context: CallbackContext):
+    sheets = await edit_placemarks_get_tags_sheets(update, context)
     sheet = sheets[int(context.user_data['tags_sheet'])]
 
     text = "Выберите тег или создайте свой, добавление тега можно пропустить"

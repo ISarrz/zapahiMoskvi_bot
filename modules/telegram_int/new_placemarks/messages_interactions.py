@@ -1,5 +1,5 @@
 from telegram.ext import CallbackContext
-from modules.telegram_int.admin_panel.new_placemarks.sheets_generators import (
+from modules.telegram_int.new_placemarks.sheets_generators import (
     new_placemarks_get_placemarks_sheets,
     new_placemarks_get_placemark_new_tags_sheets
 )
@@ -12,7 +12,7 @@ from telegram import (
 from modules.database.placemark.placemark import Placemark
 from modules.database.placemark.tag import Tag
 from modules.database.placemark.category import Category
-from modules.telegram_int.admin_panel.constants import *
+from modules.telegram_int.constants import *
 
 
 async def new_placemarks_send_placemarks_menu(update: Update, context: CallbackContext):
@@ -31,16 +31,14 @@ async def new_placemarks_send_placemarks_menu(update: Update, context: CallbackC
                                              text=text,
                                              reply_markup=reply_markup)
 
-    context.user_data['admin_panel_message'] = message
+    context.user_data['message'] = message
 
 
 async def new_placemarks_update_placemarks_menu(update: Update, context: CallbackContext):
     sheets = new_placemarks_get_placemarks_sheets()
 
-    if not sheets:
-        reply_markup = InlineKeyboardMarkup([
-            [InlineKeyboardButton(text=BACK_ARROW, callback_data=BACK_ARROW)],
-        ])
+    if not sheets or not sheets[context.user_data['new_placemarks_sheet']]:
+        reply_markup = None
 
         text = "Отзывов нет"
 
@@ -49,7 +47,7 @@ async def new_placemarks_update_placemarks_menu(update: Update, context: Callbac
         reply_markup = InlineKeyboardMarkup(sheet)
         text = "Новые отзывы"
 
-    message = context.user_data['admin_panel_message']
+    message = context.user_data['message']
 
     await context.bot.edit_message_text(
         chat_id=message.chat.id,
@@ -60,7 +58,7 @@ async def new_placemarks_update_placemarks_menu(update: Update, context: Callbac
 
 
 async def new_placemarks_update_placemark_menu(update: Update, context: CallbackContext):
-    message = context.user_data['admin_panel_message']
+    message = context.user_data['message']
     placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
     text = ""
     text += "Адресс: " + str(placemark.address) + "\n"
@@ -88,7 +86,7 @@ async def new_placemarks_update_placemark_menu(update: Update, context: Callback
 
 
 async def new_placemarks_update_placemark_edit_menu(update: Update, context: CallbackContext):
-    message = context.user_data['admin_panel_message']
+    message = context.user_data['message']
     placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
     text = ""
     text += "Адресс: " + str(placemark.address) + "\n"
@@ -151,7 +149,7 @@ async def new_placemarks_send_placemark_edit_menu(update: Update, context: Callb
         text=text,
         reply_markup=reply_markup
     )
-    context.user_data['admin_panel_message'] = message
+    context.user_data['message'] = message
 
 
 async def new_placemarks_send_tags_menu(update: Update, context: CallbackContext):
@@ -166,7 +164,7 @@ async def new_placemarks_send_tags_menu(update: Update, context: CallbackContext
         text=text,
         reply_markup=sheet
     )
-    context.user_data['admin_panel_message'] = message
+    context.user_data['message'] = message
 
 
 async def new_placemarks_update_tags_menu(update: Update, context: CallbackContext):
@@ -176,7 +174,7 @@ async def new_placemarks_update_tags_menu(update: Update, context: CallbackConte
 
     text = "Выберите тег"
 
-    message = context.user_data['admin_panel_message']
+    message = context.user_data['message']
     await context.bot.edit_message_text(
         chat_id=message.chat.id,
         message_id=message.message_id,
@@ -190,7 +188,7 @@ async def new_placemarks_send_tag_menu(update: Update, context: CallbackContext)
     category_id = tag.category_id
     if category_id != -1:
         category = Category(id=category_id)
-        text = "Тег " + tag.name + "из категории " + category.name
+        text = "Тег " + tag.name + " из категории " + category.name
     else:
         text = "Тег " + tag.name
 
@@ -206,7 +204,7 @@ async def new_placemarks_send_tag_menu(update: Update, context: CallbackContext)
         text=text,
         reply_markup=reply_markup
     )
-    context.user_data['admin_panel_message'] = message
+    context.user_data['message'] = message
 
 
 async def new_placemarks_update_tag_menu(update: Update, context: CallbackContext):
@@ -214,7 +212,7 @@ async def new_placemarks_update_tag_menu(update: Update, context: CallbackContex
     category_id = tag.category_id
     if category_id != -1:
         category = Category(id=category_id)
-        text = "Тег " + tag.name + "из категории " + category.name
+        text = "Тег " + tag.name + " из категории " + category.name
     else:
         text = "Тег " + tag.name
 
@@ -225,7 +223,7 @@ async def new_placemarks_update_tag_menu(update: Update, context: CallbackContex
         InlineKeyboardButton(text=DELETE, callback_data=DELETE),
     ]]
     reply_markup = InlineKeyboardMarkup(sheet)
-    message = context.user_data['admin_panel_message']
+    message = context.user_data['message']
     await context.bot.edit_message_text(
         chat_id=message.chat.id,
         message_id=message.message_id,

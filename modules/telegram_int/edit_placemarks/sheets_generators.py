@@ -13,7 +13,7 @@ from modules.database.placemark.category import Category
 
 
 
-def placemark_selector_get_placemarks_sheets(user: User):
+def edit_placemarks_get_placemarks_sheets(user: User):
     sheets = []
     if not user.placemarks:
         return [None]
@@ -43,7 +43,7 @@ def placemark_selector_get_placemarks_sheets(user: User):
     return sheets
 
 
-async def placemark_editor_get_categories_sheets(update: Update, context: CallbackContext):
+async def edit_placemarks_get_categories_sheets(update: Update, context: CallbackContext):
     user = User(telegram_id=int(update.effective_user.id))
     categories = Category.approved_and_user(user.id)
     sheets = []
@@ -77,7 +77,7 @@ async def placemark_editor_get_categories_sheets(update: Update, context: Callba
     return sheets
 
 
-async def placemark_editor_get_tags_sheets(update: Update, context: CallbackContext):
+async def edit_placemarks_get_tags_sheets(update: Update, context: CallbackContext):
     category = Category(id=int(context.user_data['category_id']))
 
     tags = []
