@@ -48,7 +48,9 @@ async def insert_placemark_location_handler(update: Update, context: CallbackCon
 
     reply_markup = InlineKeyboardMarkup(sheet)
     await update.message.reply_text(
-        text="Отправьте описание для адреса " + context.user_data["address"],
+
+        text=("Ваша метка: " + context.user_data[
+            "address"] + "\n\n" + "Опишите запах, который вы хотите зафиксировать. Вы можете сделать описание развернутым или совсем коротким, обратиться к своим ассоциациям и воспоминаниям об этом запахе или попытаться разобраться, из каких нот он состоит."),
         reply_markup=reply_markup
     )
 
