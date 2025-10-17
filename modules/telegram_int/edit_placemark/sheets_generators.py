@@ -16,7 +16,7 @@ from modules.database.placemark.category import Category
 def placemark_selector_get_placemarks_sheets(user: User):
     sheets = []
     if not user.placemarks:
-        return [[[InlineKeyboardButton(text=ADD, callback_data=ADD)]]]
+        return [None]
 
     placemarks = [Placemark(id=placemark.id) for placemark in user.placemarks]
     cur_sheet = []
