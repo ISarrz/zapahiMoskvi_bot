@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import List
 from dataclasses import dataclass
-from datetime import datetime
 from modules.database.database.database import DB
-from modules.database.geotag.geotag import Geotag, DbGeotag
+from modules.database.placemark.placemark import Placemark, DbPlacemark
+from modules.database.user.notification import DbNotification, Notification
 
 
 class UserNotFoundError(Exception):
@@ -23,9 +23,10 @@ class InvalidUserArgumentsError(Exception):
 
 
 @dataclass
-class DbUser():
+class DbUser:
     id: int
     telegram_id: int
+    role: str
 
 
 class UserFetcher:
@@ -50,7 +51,7 @@ class UserFetcher:
             return [UserFetcher.constructor(user_info) for user_info in info]
 
         else:
-            return DbUser(id=info["id"], telegram_id=info["telegram_id"])
+            return DbUser(**dict(info))
 
 
 class UserDeleter:
@@ -61,20 +62,17 @@ class UserDeleter:
 
 class UserInserter:
     @staticmethod
-    def insert(telegram_id: int):
-        DB.insert_one(DB.users_table_name, telegram_id=telegram_id)
+    def insert(telegram_id: int, role="user"):
+        DB.insert_one(DB.users_table_name, telegram_id=telegram_id, role=role)
         user = UserFetcher.fetch_by_telegram_id(telegram_id=telegram_id)
-
-    @staticmethod
-    def insert_geotag(user_id, geotag, about):
-        DB.insert_one(DB.users_geotags_table_name, user_id=user_id, geotag=geotag, about=about)
 
 
 class UserUpdater:
     pass
-    # @staticmethod
-    # def update_notifications(user: DbUser, notifications_state: int):
-    #     DB.update_one(DB.users_notifications_table_name, dict(user_id=user.id), dict(value=notifications_state))
+
+    @staticmethod
+    def update_role(user_id: int, role: str):
+        DB.update_one(DB.users_table_name, {"id": user_id}, {"role": role})
 
 
 class User:
@@ -116,33 +114,48 @@ class User:
         return self._user.telegram_id
 
     @property
-    def geotags(self) -> list[DbGeotag]:
-        return Geotag.user_geotags(user_id=self.id)
+    def placemarks(self) -> list[DbPlacemark]:
+        return Placemark.user_placemarks(user_id=self.id)
+
+    @property
+    def notifications(self) -> list[DbNotification]:
+        return Notification.user_notifications(user_id=self.id)
+
+    @property
+    def role(self) -> str:
+        return self._user.role
+
+    def give_admin_role(self):
+        UserUpdater.update_role(self.id, "admin")
+
+    def give_user_role(self):
+        UserUpdater.update_role(self.id, "user")
 
     @staticmethod
-    def safe_insert(telegram_id: int):
+    def safe_insert(telegram_id: int, role="user"):
         try:
-            User.insert(telegram_id=telegram_id)
+            User.insert(telegram_id=telegram_id, role=role)
         except UserAlreadyExistsError:
             pass
 
     @staticmethod
-    def insert(telegram_id: int) -> User:
+    def insert(telegram_id: int, role="user") -> User:
         try:
             User(telegram_id=telegram_id)
 
             raise UserAlreadyExistsError
 
         except UserNotFoundError:
-            UserInserter.insert(telegram_id=telegram_id)
+            UserInserter.insert(telegram_id=telegram_id, role=role)
 
             return User(telegram_id=telegram_id)
 
     def delete(self):
         UserDeleter.delete(self._user)
 
-    def insert_geotag(self, geotag, about):
-        Geotag.insert(self.id, geotag, about)
+    def insert_placemark(self, datetime: str, address: str, latitude: str, longitude: str, description: str,
+                         status="pending"):
+        return Placemark.insert(self.id, datetime, address, latitude, longitude, description, status)
 
     def __str__(self):
         return f"id: {self.id}, telegram_id: {self.telegram_id}"
