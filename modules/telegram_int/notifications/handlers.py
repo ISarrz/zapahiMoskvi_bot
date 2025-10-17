@@ -15,6 +15,7 @@ from telegram.ext import (
 from modules.database.user.notification import Notification
 from modules.logger.logger import logger, async_logger
 from modules.database.user.user import User
+from modules.telegram_int.constants import WEEKDAYS_HANDLER, HOURS_HANDLER
 
 MAX_SHEET_LENGTH = 5
 LEFT_ARROW = "←"
@@ -42,11 +43,11 @@ def get_weekdays_sheet():
 
 
 @async_logger
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def notifications_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     User.safe_insert(update.effective_chat.id)
 
     await send_weekdays(update, context)
-    return 0
+    return WEEKDAYS_HANDLER
 
 
 @async_logger
@@ -80,7 +81,7 @@ async def weekdays_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     context.user_data['weekday'] = income
     await update_time(update, context)
-    return 1
+    return HOURS_HANDLER
 
 
 async def update_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -108,7 +109,7 @@ async def time_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         notification.delete()
 
         await update_time(update, context)
-        return 1
+        return HOURS_HANDLER
 
     elif "add" in income:
         income = income.replace("add ", "").split()
@@ -118,14 +119,14 @@ async def time_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         Notification.insert(user.id, notification_weekday, notification_time)
 
         await update_time(update, context)
-        return 1
+        return HOURS_HANDLER
 
     elif income == BACK_ARROW:
         await update_weekdays(update, context)
-        return 0
+        return WEEKDAYS_HANDLER
 
     await update_time(update, context)
-    return 1
+    return WEEKDAYS_HANDLER
 
 
 @logger
@@ -192,20 +193,3 @@ def get_time_sheet(user: User, context: ContextTypes.DEFAULT_TYPE):
 
     return keyboard
 
-
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    return ConversationHandler.END
-
-
-ConversationHandler_notifications_editor = ConversationHandler(
-    entry_points=[CommandHandler('notifications', start)],
-
-    states={
-        0: [CallbackQueryHandler(weekdays_handler)],
-        1: [CallbackQueryHandler(time_handler)]
-    },
-
-    fallbacks=[MessageHandler(filters.COMMAND, cancel)],
-    allow_reentry=True,
-    per_message=False
-)
