@@ -1,4 +1,4 @@
-from pyanaconda.argument_parsing import DESCRIPTION
+
 from telegram import (
     Update,
     InlineKeyboardButton,
