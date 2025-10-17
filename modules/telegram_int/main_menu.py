@@ -56,7 +56,7 @@ async def start(update: Update, context: CallbackContext):
     await update.message.reply_text(
         text=text,
         reply_markup=ReplyKeyboardMarkup(
-            reply_keyboard, one_time_keyboard=True, input_field_placeholder="Выберите раздел"
+            reply_keyboard, one_time_keyboard=False, input_field_placeholder="Выберите раздел"
         ),
     )
 
