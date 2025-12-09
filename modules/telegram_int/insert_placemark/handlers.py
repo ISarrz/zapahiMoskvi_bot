@@ -60,9 +60,19 @@ async def insert_placemark_description_handler(update: Update, context: Callback
     description = update.message.text
     context.user_data["description"] = description
     context.user_data["tags"] = []
-    await placemark_inserter_send_categories_menu(update, context)
 
-    return PLACEMARK_INSERTER_CATEGORIES_HANDLER
+
+
+    # ВОТ ТУТ ПРОПУСК ЧАСТИ С ТЕГАМИ
+    # ААААААААААААААААААААААААААААААААААААААААААААААААААА
+    # await placemark_inserter_send_categories_menu(update, context)
+    # return PLACEMARK_INSERTER_CATEGORIES_HANDLER
+
+    await insert_user_placemark(update, context)
+    context.user_data["tags"] = []
+
+    return MAIN_MENU_HANDLER
+
 
 
 @async_logger
