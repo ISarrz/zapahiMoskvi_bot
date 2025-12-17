@@ -5,7 +5,7 @@ from flask import Flask, jsonify, Response
 app = Flask(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATABASE_PATH = os.path.join(BASE_DIR, 'data', "database.db")
+DATABASE_PATH = os.path.join(BASE_DIR, 'data', "test_database.db")
 
 def get_conn():
     conn = sqlite3.connect(DATABASE_PATH)
