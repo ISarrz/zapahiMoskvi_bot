@@ -6,6 +6,7 @@ from modules.config.config import get_config_field
 from telegram import (
     Update
 )
+from telegram.error import Forbidden, TelegramError
 from modules.telegram_int.main_menu import ConversationHandler_main_menu
 from telegram.ext import (
     ApplicationBuilder,
@@ -45,11 +46,15 @@ async def send_notifications(context: CallbackContext):
         for notification in user.notifications:
             if weekday == notification.weekday and hour == int(notification.time.split(":")[0]):
                 if not notifications_states[str(user.id) + " " + str(weekday) + " " + str(hour)]:
-                    await context.bot.send_message(
-                        chat_id=user.telegram_id,
-                        text="Напоминание",
-                        reply_markup=None
-                    )
+                    try:
+                        await context.bot.send_message(
+                            chat_id=user.telegram_id,
+                            text="Напоминание",
+                            reply_markup=None
+                        )
+                    except Forbidden:
+                        pass
+
                     notifications_states[str(user.id) + " " + str(weekday) + " " + str(hour)] = True
 
             else:
