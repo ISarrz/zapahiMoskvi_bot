@@ -69,20 +69,18 @@ async def get_chat_id(update: Update, context: CallbackContext):
     await update.message.reply_text(text=str(chat_id))
 
 
-@async_logger
-async def start(update: Update, context: CallbackContext):
-    chat_id = update.effective_chat.id
-    User.safe_insert(telegram_id=update.effective_user.id)
-    await update.message.reply_text(text="Привет! Это бот, отслеживающий запахи Москвы. "
-                                         "Здесь вы можете оставить отзывы на ароматы, которые услышали в разных районах города. "
-                                         "Попробуйте прислушаться к запахам вокруг и опишите их, а если возникнут затруднения — обратитесь к тегам, "
-                                         "готовым нотам, разбитым на категории."
-                                         "\nЧтобы добавить первый отзыв и геометку, пропишите /placemarks.")
-
+# @async_logger
+# async def start(update: Update, context: CallbackContext):
+#     User.safe_insert(telegram_id=update.effective_user.id)
+#     await update.message.reply_text(text="Привет! Это бот, отслеживающий запахи Москвы. "
+#                                          "Здесь вы можете оставить отзывы на ароматы, которые услышали в разных районах города. "
+#                                          "Попробуйте прислушаться к запахам вокруг и опишите их, а если возникнут затруднения — обратитесь к тегам, "
+#                                          "готовым нотам, разбитым на категории."
+#                                          "\nЧтобы добавить первый отзыв и геометку, пропишите /placemarks.")
+#
 
 @async_logger
 async def all_placemarks(update: Update, context: CallbackContext):
-    chat_id = update.effective_chat.id
     User.safe_insert(telegram_id=update.effective_user.id)
     await update.message.reply_text(text="ССЫЛКА НА КАРТУ")
 

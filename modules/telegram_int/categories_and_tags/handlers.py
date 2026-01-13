@@ -23,6 +23,20 @@ from modules.database.placemark.tag import Tag
 
 @async_logger
 async def categories_and_tags_handler(update: Update, context: CallbackContext):
+    user = User(telegram_id=update.effective_user.id)
+    if user.role != "admin":
+        text = ("Привет! Это бот, отслеживающий запахи Москвы. "
+                "Здесь вы можете оставить отзывы на ароматы, которые услышали в разных районах города. "
+                "Попробуйте прислушаться к запахам вокруг и опишите их, а если возникнут затруднения — обратитесь к тегам, "
+                "готовым нотам, разбитым на категории."
+                "\n\nЧтобы добавить первый ольфакторный отзыв, нажмите кнопку «Добавить метку».")
+
+        await update.message.reply_text(
+            text=text
+        )
+
+        return MAIN_MENU_HANDLER
+
     context.user_data['tags_sheet'] = 0
     context.user_data['categories_sheet'] = 0
     await categories_and_tags_send_categories_menu(update, context)

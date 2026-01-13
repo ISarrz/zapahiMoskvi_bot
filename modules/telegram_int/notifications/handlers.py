@@ -48,7 +48,7 @@ async def send_weekdays(update: Update, context: CallbackContext):
     reply_markup = InlineKeyboardMarkup(get_weekdays_sheet())
 
     message = await context.bot.send_message(chat_id=update.effective_chat.id,
-                                             text="Уведомления",
+                                             text="Напоминания",
                                              reply_markup=reply_markup)
 
     context.user_data['message'] = message

@@ -36,7 +36,7 @@ def new_placemarks_get_placemarks_sheets():
 
 async def new_placemarks_get_placemark_new_tags_sheets(update: Update, context: CallbackContext):
     placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
-    tags = [tag for tag in placemark.tags if tag.status == "pending"]
+    tags = [tag for tag in placemark.tags]
 
     sheets = []
     for tag in tags:

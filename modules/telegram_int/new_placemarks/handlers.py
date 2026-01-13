@@ -22,12 +22,27 @@ from modules.telegram_int.new_placemarks.messages_interactions import (
     new_placemarks_send_placemarks_menu
 
 )
+# from modules.telegram_int.
 from modules.database.placemark.tag import Tag
 from modules.telegram_int.new_placemarks.support_functions import get_address
 from modules.database.placemark.placemark import Placemark
 
 
 async def new_placemarks_handler(update: Update, context: CallbackContext):
+    user = User(telegram_id=update.effective_user.id)
+    if user.role != "admin":
+        text = ("Привет! Это бот, отслеживающий запахи Москвы. "
+                "Здесь вы можете оставить отзывы на ароматы, которые услышали в разных районах города. "
+                "Попробуйте прислушаться к запахам вокруг и опишите их, а если возникнут затруднения — обратитесь к тегам, "
+                "готовым нотам, разбитым на категории."
+                "\n\nЧтобы добавить первый ольфакторный отзыв, нажмите кнопку «Добавить метку».")
+
+        await update.message.reply_text(
+            text=text
+        )
+
+        return MAIN_MENU_HANDLER
+
     context.user_data['new_placemarks_sheet'] = 0
     await new_placemarks_send_placemarks_menu(update, context)
     return NEW_PLACEMARKS_HANDLER
@@ -39,19 +54,19 @@ async def new_placemarks_selector_handler(update: Update, context: CallbackConte
     income = query.data
 
     if income == LEFT_ARROW:
-        context.user_data['new_placemark_sheet'] -= 1
+        context.user_data['new_placemarks_sheet'] -= 1
         sheets = new_placemarks_get_placemarks_sheets()
-        context.user_data['new_placemark_sheet'] += len(sheets)
-        context.user_data['new_placemark_sheet'] %= len(sheets)
+        context.user_data['new_placemarks_sheet'] += len(sheets)
+        context.user_data['new_placemarks_sheet'] %= len(sheets)
 
         await new_placemarks_update_placemarks_menu(update, context)
 
         return NEW_PLACEMARKS_HANDLER
 
     elif income == RIGHT_ARROW:
-        context.user_data['approved_placemark_sheet'] += 1
+        context.user_data['new_placemarks_sheet'] += 1
         sheets = new_placemarks_get_placemarks_sheets()
-        context.user_data['approved_placemark_sheet'] %= len(sheets)
+        context.user_data['new_placemarks_sheet'] %= len(sheets)
 
         await new_placemarks_update_placemarks_menu(update, context)
 
@@ -145,12 +160,13 @@ async def new_placemarks_placemark_edit_handler(update: Update, context: Callbac
         return NEW_PLACEMARKS_PLACEMARK_MENU_HANDLER
 
     elif income == "tags":
+        context.user_data['tags_sheet'] = 0
         await new_placemarks_update_tags_menu(update, context)
 
         return NEW_PLACEMARKS_PLACEMARK_NEW_TAGS_HANDLER
 
     elif income == "address":
-        message = context.user_data['message']
+        message = context.user_data["message"]
         await context.bot.edit_message_text(
             chat_id=message.chat.id,
             message_id=message.message_id,
@@ -209,14 +225,14 @@ async def new_placemarks_placemark_edit_location_handler(update: Update, context
     location = update.message.location
     latitude = location.latitude
     longitude = location.longitude
-    placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
+    placemark = Placemark(id=int(context.user_data["selected_placemark_id"]))
 
     placemark.latitude = latitude
     placemark.longitude = longitude
     placemark.address = get_address(latitude, longitude)
 
-    context.user_data['placemark_changed'] = True
-    message = context.user_data['message']
+    context.user_data["placemark_changed"] = True
+    message = context.user_data["message"]
 
     await new_placemarks_send_placemark_edit_menu(update, context)
     return NEW_PLACEMARKS_PLACEMARK_EDIT_HANDLER
@@ -224,11 +240,11 @@ async def new_placemarks_placemark_edit_location_handler(update: Update, context
 
 async def new_placemarks_placemark_edit_address_handler(update: Update, context: CallbackContext):
     address = update.message.text
-    placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
+    placemark = Placemark(id=int(context.user_data["selected_placemark_id"]))
     placemark.address = address
 
-    context.user_data['placemark_changed'] = True
-    message = context.user_data['message']
+    context.user_data["placemark_changed"] = True
+    message = context.user_data["message"]
 
     await new_placemarks_send_placemark_edit_menu(update, context)
     return NEW_PLACEMARKS_PLACEMARK_EDIT_HANDLER
@@ -240,7 +256,6 @@ async def new_placemarks_placemark_edit_description_handler(update: Update, cont
     placemark.description = description
 
     context.user_data['placemark_changed'] = True
-    message = context.user_data['message']
 
     await new_placemarks_send_placemark_edit_menu(update, context)
     return NEW_PLACEMARKS_PLACEMARK_EDIT_HANDLER
@@ -347,16 +362,26 @@ async def new_placemarks_tag_menu_handler(update: Update, context: CallbackConte
         ]]
         reply_markup = InlineKeyboardMarkup(sheet)
         message = context.user_data['message']
-        await context.bot.edit_message_text(
-            chat_id=message.chat.id,
-            message_id=message.message_id,
-            text="Удалить тег " + tag.name + "?",
-            reply_markup=reply_markup
-        )
+        if tag.status == "approved":
+            await context.bot.edit_message_text(
+                chat_id=message.chat.id,
+                message_id=message.message_id,
+                text="Открепить тег " + tag.name + "?",
+                reply_markup=reply_markup
+            )
+
+        else:
+            await context.bot.edit_message_text(
+                chat_id=message.chat.id,
+                message_id=message.message_id,
+                text="Удалить тег " + tag.name + "?",
+                reply_markup=reply_markup
+            )
 
         return NEW_PLACEMARKS_PLACEMARK_NEW_TAG_DELETE_HANDLER
 
     return ConversationHandler.END
+
 async def new_placemarks_tag_edit_handler(update: Update, context: CallbackContext):
     name = update.message.text
     tag = Tag(id=int(context.user_data['tag_id']))
@@ -374,8 +399,15 @@ async def new_placemarks_delete_tag_handler(update: Update, context: CallbackCon
 
     if income == SUBMIT:
         tag = Tag(id=int(context.user_data['tag_id']))
-        tag.delete()
+        if tag.status == "approved":
+            placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
+            placemark.delete_tag(tag)
+
+        else:
+            tag.delete()
+
         await new_placemarks_update_tags_menu(update, context)
+
         return NEW_PLACEMARKS_PLACEMARK_NEW_TAGS_HANDLER
 
     else:

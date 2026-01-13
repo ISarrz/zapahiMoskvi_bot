@@ -169,7 +169,7 @@ async def new_placemarks_send_tags_menu(update: Update, context: CallbackContext
 
 async def new_placemarks_update_tags_menu(update: Update, context: CallbackContext):
     sheets = await new_placemarks_get_placemark_new_tags_sheets(update, context)
-    context.user_data['tags_sheet'] = 0
+
     sheet = sheets[int(context.user_data['tags_sheet'])]
 
     text = "Выберите тег"
@@ -216,12 +216,19 @@ async def new_placemarks_update_tag_menu(update: Update, context: CallbackContex
     else:
         text = "Тег " + tag.name
 
-    sheet = [[
-        InlineKeyboardButton(text=BACK_ARROW, callback_data=BACK_ARROW),
-        InlineKeyboardButton(text=SUBMIT, callback_data=SUBMIT),
-        InlineKeyboardButton(text=EDIT, callback_data=EDIT),
-        InlineKeyboardButton(text=DELETE, callback_data=DELETE),
-    ]]
+    if tag.status == "approved":
+        sheet = [[
+            InlineKeyboardButton(text=BACK_ARROW, callback_data=BACK_ARROW),
+            InlineKeyboardButton(text=DELETE, callback_data=DELETE),
+        ]]
+    else:
+        sheet = [[
+            InlineKeyboardButton(text=BACK_ARROW, callback_data=BACK_ARROW),
+            InlineKeyboardButton(text=SUBMIT, callback_data=SUBMIT),
+            InlineKeyboardButton(text=EDIT, callback_data=EDIT),
+            InlineKeyboardButton(text=DELETE, callback_data=DELETE),
+        ]]
+
     reply_markup = InlineKeyboardMarkup(sheet)
     message = context.user_data['message']
     await context.bot.edit_message_text(

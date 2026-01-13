@@ -38,6 +38,7 @@ class TagDeleter:
     def delete(tag: DbTag):
         DB.delete_one(DB.tags_table_name, id=tag.id)
         DB.delete_one(DB.tags_categories_table_name, tag_id=tag.id)
+        DB.delete_one(DB.placemarks_tags_table_name, tag_id=tag.id)
 
     @staticmethod
     def delete_category(tag_id: int, category_id: int):
