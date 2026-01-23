@@ -119,7 +119,10 @@ class User:
 
     @property
     def notifications(self) -> list[DbNotification]:
-        return Notification.user_notifications(user_id=self.id)
+        x = Notification.user_notifications(user_id=self.id)
+        if not x:
+            return []
+        return x
 
     @property
     def role(self) -> str:

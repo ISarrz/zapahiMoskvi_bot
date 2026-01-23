@@ -78,7 +78,7 @@ def main():
     application = ApplicationBuilder().token(token).build()
 
     application.add_handler(ConversationHandler_main_menu, 1)
-    application.add_handler(CallbackQueryHandler(notifications_handler, pattern="настройка напоминаний"))
+    application.add_handler(CallbackQueryHandler(notifications_handler, pattern="настройка напоминаний"), 2)
     application.add_handler(CommandHandler("get_db", send_db))
     job_deque = application.job_queue
     job_deque.run_repeating(send_logs, 20)
