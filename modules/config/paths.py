@@ -31,4 +31,5 @@ templates_path = os.path.join(render_path, "templates")
 
 telegram_path = os.path.join(modules_path, "telegram_int")
 telegram_messages_path = os.path.join(telegram_path, "messages")
+telegram_data_path = os.path.join(telegram_path, "data.json")
 telegram_info_message_path = os.path.join(telegram_messages_path, "info.txt")

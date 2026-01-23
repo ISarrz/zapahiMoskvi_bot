@@ -4,16 +4,22 @@ from modules.database.log.log import Log
 from modules.time.time import now_data
 from modules.config.config import get_config_field
 from telegram import (
-    Update
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup
 )
+from modules.telegram_int.notifications.handlers import send_notifications
 from telegram.error import Forbidden, TelegramError
 from modules.telegram_int.main_menu import ConversationHandler_main_menu
 from telegram.ext import (
     ApplicationBuilder,
     CallbackContext,
+CallbackQueryHandler
 )
-from modules.logger.logger import async_logger
 
+from modules.logger.logger import async_logger
+from modules.config.config import get_telegram_message
+from modules.telegram_int.notifications.handlers import notifications_handler
 
 @async_logger
 async def send_logs(context: CallbackContext):
@@ -28,38 +34,14 @@ async def send_logs(context: CallbackContext):
         log.delete()
 
 
-notifications_states = dict()
-
-
 @async_logger
-async def send_notifications(context: CallbackContext):
+async def send_reboot_notifications(context: CallbackContext):
     for user in User.all():
-        now = now_data()
-        weekday = now.weekday()
-        hour = now.hour
-        if notifications_states.get(str(user.id) + " " + str(weekday) + " " + str(hour)) is None:
-            notifications_states[str(user.id) + " " + str(weekday) + " " + str(hour)] = False
+        text = "Проведено техническое обслуживание. Для дальнейшей работы пропишите /start"
+        await context.bot.send_message(chat_id=user.telegram_id, text=text)
 
-        if not user.notifications:
-            continue
 
-        for notification in user.notifications:
-            if weekday == notification.weekday and hour == int(notification.time.split(":")[0]):
-                if not notifications_states[str(user.id) + " " + str(weekday) + " " + str(hour)]:
-                    try:
-                        await context.bot.send_message(
-                            chat_id=user.telegram_id,
-                            text="Напоминание",
-                            reply_markup=None
-                        )
-                    except Forbidden:
-                        pass
 
-                    notifications_states[str(user.id) + " " + str(weekday) + " " + str(hour)] = True
-
-            else:
-                notifications_states[
-                    str(user.id) + " " + str(notification.weekday) + " " + str(notification.time.split(":")[0])] = False
 
 
 @async_logger
@@ -68,16 +50,6 @@ async def get_chat_id(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
     await update.message.reply_text(text=str(chat_id))
 
-
-# @async_logger
-# async def start(update: Update, context: CallbackContext):
-#     User.safe_insert(telegram_id=update.effective_user.id)
-#     await update.message.reply_text(text="Привет! Это бот, отслеживающий запахи Москвы. "
-#                                          "Здесь вы можете оставить отзывы на ароматы, которые услышали в разных районах города. "
-#                                          "Попробуйте прислушаться к запахам вокруг и опишите их, а если возникнут затруднения — обратитесь к тегам, "
-#                                          "готовым нотам, разбитым на категории."
-#                                          "\nЧтобы добавить первый отзыв и геометку, пропишите /placemarks.")
-#
 
 @async_logger
 async def all_placemarks(update: Update, context: CallbackContext):
@@ -90,13 +62,16 @@ def main():
     application = ApplicationBuilder().token(token).build()
 
     application.add_handler(ConversationHandler_main_menu, 1)
+    application.add_handler(CallbackQueryHandler(notifications_handler, pattern="настройка напоминаний"))
 
     job_deque = application.job_queue
     job_deque.run_repeating(send_logs, 20)
-    job_deque.run_repeating(send_notifications, 20)
-
+    job_deque.run_once(send_reboot_notifications, 0)
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
+from modules.config.paths import telegram_messages_path
+
+print(telegram_messages_path)
 if __name__ == '__main__':
     main()

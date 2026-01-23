@@ -79,6 +79,10 @@ from modules.telegram_int.approved_placemarks.handlers import (
     approved_placemarks_placemark_info_handler
 )
 
+jobs = {}
+
+from modules.telegram_int.notifications.handlers import send_notifications
+
 
 @async_logger
 async def start(update: Update, context: CallbackContext):
@@ -89,6 +93,20 @@ async def start(update: Update, context: CallbackContext):
             "Попробуйте прислушаться к запахам вокруг и опишите их, а если возникнут затруднения — обратитесь к тегам, "
             "готовым нотам, разбитым на категории."
             "\n\nЧтобы добавить первый ольфакторный отзыв, нажмите кнопку «Добавить метку».")
+
+    chat_id = update.effective_chat.id
+
+    if chat_id in jobs:
+        jobs[chat_id].schedule_removal()
+
+    job = context.job_queue.run_repeating(
+        send_notifications,
+        interval=20,
+        first=0,
+        chat_id=chat_id
+    )
+
+    jobs[chat_id] = job
 
     reply_keyboard = [
         ["Добавить метку", "Все метки"],
@@ -105,7 +123,6 @@ async def start(update: Update, context: CallbackContext):
             reply_keyboard, one_time_keyboard=False, input_field_placeholder="Выберите раздел"
         ),
     )
-
 
     return MAIN_MENU_HANDLER
 
@@ -132,7 +149,7 @@ ConversationHandler_main_menu = ConversationHandler(
 
     states={
         MAIN_MENU_HANDLER: COMMON_HANDLERS,
-
+        NOTIFICATION_HANDLER: [CallbackQueryHandler(notifications_handler, pattern="настройка напоминаний")],
         PLACEMARK_INSERTER_LOCATION_HANDLER: COMMON_HANDLERS + [
             MessageHandler(filters.LOCATION, insert_placemark_location_handler),
             CallbackQueryHandler(insert_placemark_handler)

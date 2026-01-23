@@ -4,11 +4,16 @@ from telegram import (
     InlineKeyboardMarkup,
 )
 from telegram.ext import CallbackContext
-
+from telegram.error import Forbidden, TelegramError
 from modules.database.user.notification import Notification
 from modules.logger.logger import logger, async_logger
 from modules.database.user.user import User
-from modules.telegram_int.constants import WEEKDAYS_HANDLER, HOURS_HANDLER
+from modules.telegram_int.constants import WEEKDAYS_HANDLER, HOURS_HANDLER, NOTIFICATION_HANDLER
+from modules.config.config import get_telegram_message
+from modules.time.time import now_data
+from modules.config.config import get_notification_message, set_notification_message
+
+
 
 MAX_SHEET_LENGTH = 5
 LEFT_ARROW = "←"
@@ -20,17 +25,71 @@ DELETE = "❌"
 SUBMIT = "✓︎"
 CANCEL = "⨯"
 
+notifications_states = dict()
 
-def get_weekdays_sheet():
-    keyboard = [
-        [InlineKeyboardButton("Понедельник", callback_data=0)],
-        [InlineKeyboardButton("Вторник", callback_data=1)],
-        [InlineKeyboardButton("Среда", callback_data=2)],
-        [InlineKeyboardButton("Четверг", callback_data=3)],
-        [InlineKeyboardButton("Пятница", callback_data=4)],
-        [InlineKeyboardButton("Суббота", callback_data=5)],
-        [InlineKeyboardButton("Воскресенье", callback_data=6)]
+
+@async_logger
+async def send_notifications(context: CallbackContext):
+    for user in User.all():
+        now = now_data()
+        weekday = now.weekday()
+        hour = now.hour
+        if notifications_states.get(str(user.id) + " " + str(weekday) + " " + str(hour)) is None:
+            notifications_states[str(user.id) + " " + str(weekday) + " " + str(hour)] = False
+
+        if not user.notifications:
+            continue
+
+        for notification in user.notifications:
+            if weekday == notification.weekday and hour == int(notification.time.split(":")[0]):
+                if not notifications_states[str(user.id) + " " + str(weekday) + " " + str(hour)]:
+                    try:
+                        reply_keyboard = [
+                            [InlineKeyboardButton(text="настроить напоминания", callback_data="настройка напоминаний")]
+                        ]
+                        keyboard_markup = InlineKeyboardMarkup(reply_keyboard)
+
+                        text = get_telegram_message("notification")
+                        message = await context.bot.send_message(
+                            chat_id=user.telegram_id,
+                            text=text,
+                            reply_markup=keyboard_markup,
+                            parse_mode="Markdown"
+                        )
+
+                        set_notification_message(user.id , message.id)
+                    except Forbidden:
+                        pass
+
+                    notifications_states[str(user.id) + " " + str(weekday) + " " + str(hour)] = True
+
+            else:
+                notifications_states[
+                    str(user.id) + " " + str(notification.weekday) + " " + str(notification.time.split(":")[0])] = False
+
+
+def get_weekdays_sheet(update: Update, context: CallbackContext):
+    user = User(telegram_id=update.effective_user.id)
+    user_weekdays = set()
+    for notification in user.notifications:
+        user_weekdays.add(notification.weekday)
+
+    weekdays_numbers = [
+        "Понедельник",
+        "Вторник",
+        "Среда",
+        "Четверг",
+        "Пятница",
+        "Суббота",
+        "Воскресенье"
     ]
+    keyboard = []
+
+    for i in range(len(weekdays_numbers)):
+        if i in user_weekdays:
+            keyboard.append([InlineKeyboardButton(f"{weekdays_numbers[i]} {SUBMIT}", callback_data=i)])
+        else:
+            keyboard.append([InlineKeyboardButton(f"{weekdays_numbers[i]} ", callback_data=i)], )
 
     return keyboard
 
@@ -38,6 +97,19 @@ def get_weekdays_sheet():
 @async_logger
 async def notifications_handler(update: Update, context: CallbackContext):
     User.safe_insert(update.effective_chat.id)
+    try:
+        user = User(telegram_id=update.effective_user.id)
+        message_id = get_notification_message(user.id)
+        if message_id:
+            await context.bot.edit_message_reply_markup(
+                chat_id=update.effective_user.id,
+                message_id=message_id,
+                reply_markup=None
+            )
+        set_notification_message(user.id, None)
+
+    except Exception:
+        pass
 
     await send_weekdays(update, context)
     return WEEKDAYS_HANDLER
@@ -45,8 +117,9 @@ async def notifications_handler(update: Update, context: CallbackContext):
 
 @async_logger
 async def send_weekdays(update: Update, context: CallbackContext):
-    reply_markup = InlineKeyboardMarkup(get_weekdays_sheet())
-
+    reply_markup = InlineKeyboardMarkup(get_weekdays_sheet(update, context))
+    text = get_telegram_message("notifications_settings")
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
     message = await context.bot.send_message(chat_id=update.effective_chat.id,
                                              text="Напоминания",
                                              reply_markup=reply_markup)
@@ -56,7 +129,7 @@ async def send_weekdays(update: Update, context: CallbackContext):
 
 @async_logger
 async def update_weekdays(update: Update, context: CallbackContext):
-    reply_markup = InlineKeyboardMarkup(get_weekdays_sheet())
+    reply_markup = InlineKeyboardMarkup(get_weekdays_sheet(update, context))
     message = context.user_data['message']
     await context.bot.edit_message_text(
         chat_id=message.chat.id,
@@ -185,4 +258,3 @@ def get_time_sheet(user: User, context: CallbackContext):
     ]
 
     return keyboard
-

@@ -22,9 +22,6 @@ def get_address(latitude: float, longitude: float):
     if location.raw["address"].get("house_number"):
         res.append(location.raw["address"]["house_number"])
 
-    if location.raw["address"].get("postcode"):
-        res.append(location.raw["address"]["postcode"])
-
     if not res:
         res.append("Неизвестно")
 

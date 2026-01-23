@@ -26,7 +26,7 @@ def edit_placemarks_get_placemarks_sheets(user: User):
             sheets.append(cur_sheet)
             cur_sheet = []
 
-        cur_sheet.append([InlineKeyboardButton(text=placemark.address, callback_data=placemark.id)])
+        cur_sheet.append([InlineKeyboardButton(text=placemark.description, callback_data=placemark.id)])
 
     if cur_sheet:
         sheets.append(cur_sheet)

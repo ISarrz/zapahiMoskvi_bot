@@ -14,6 +14,8 @@ from modules.telegram_int.edit_placemarks.sheets_generators import (
     edit_placemarks_get_categories_sheets,
     edit_placemarks_get_tags_sheets
 )
+
+
 async def edit_placemarks_placemark_selector_send_placemarks_menu(update: Update, context: CallbackContext):
     sheets = edit_placemarks_get_placemarks_sheets(User(telegram_id=update.effective_user.id))
     sheet = sheets[context.user_data['placemark_sheet']]
@@ -23,11 +25,17 @@ async def edit_placemarks_placemark_selector_send_placemarks_menu(update: Update
         reply_markup = None
 
     if sheets and len(sheets) > 1:
-        text = "Метки №" + str(context.user_data['placemark_sheet'] + 1)
+        text = f"📍 Мои метки № {context.user_data['placemark_sheet'] + 1}:\n"
+        text +=  " (нажмите на кнопку, чтобы увидеть метку с запахом целиком)"
+
+
     elif not sheet:
         text = "Меток нет"
+
     else:
-        text = "Метки"
+
+        text = f"📍 Мои метки:\n"
+        text += " (нажмите на кнопку, чтобы увидеть метку с запахом целиком)"
 
     message = await context.bot.send_message(chat_id=update.effective_chat.id,
                                              text=text,
@@ -45,9 +53,12 @@ async def edit_placemarks_placemark_selector_update_placemarks_menu(update: Upda
         reply_markup = None
 
     if len(sheets) > 1:
-        text = "Метки №" + str(context.user_data['placemark_sheet'] + 1)
+        text = f"📍 Мои метки № {context.user_data['placemark_sheet'] + 1}:\n"
+        text += " (нажмите на кнопку, чтобы увидеть метку с запахом целиком)"
     else:
-        text = "Метки"
+        text = f"📍 Мои метки:\n"
+        text += " (нажмите на кнопку, чтобы увидеть метку с запахом целиком)"
+
     message = context.user_data['message']
 
     await context.bot.edit_message_text(
@@ -62,10 +73,8 @@ async def edit_placemarks_update_placemark_info_menu(update: Update, context: Ca
     message = context.user_data['message']
     placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
     text = ""
-    text += "Адресс: " + str(placemark.address) + "\n"
-    text += "Дата и время создания: " + str(placemark.datetime) + "\n"
-    text += "Широта: " + str(placemark.latitude) + "\n"
-    text += "Долгота: " + str(placemark.longitude) + "\n"
+    text += str(placemark.address) + "\n\n"
+    text += str(placemark.datetime) + "\n\n"
     text += "Описание: " + str(placemark.description) + "\n"
     text += "Теги: " + ", ".join(tag.name for tag in placemark.tags) + "\n"
 
