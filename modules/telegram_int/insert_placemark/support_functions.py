@@ -42,12 +42,19 @@ async def insert_user_placemark(update: Update, context: CallbackContext):
 
     for tag in tags:
         placemark.insert_tag(tag=tag)
+
     text = "Ваша геометка добавлена:\n"
-    text += "Адресс: " + placemark.address + "\n"
-    text += "Долгота: " + placemark.latitude + "\n"
-    text += "Широта: " + placemark.longitude + "\n"
-    text += "Описание: " + placemark.description + "\n"
-    text += "Теги: " + ', '.join([tag.name for tag in tags]) + "\n"
+    text += f"{placemark.address}\n\n"
+    text += f"{placemark.datetime}\n\n"
+    text += f"Описание: {placemark.description}\n\n"
+    text += f"Теги: {', '.join(tag.name for tag in placemark.tags)}\n"
+
+    # text = "Ваша геометка добавлена:\n"
+    # text += "Адресс: " + placemark.address + "\n"
+    # text += "Долгота: " + placemark.latitude + "\n"
+    # text += "Широта: " + placemark.longitude + "\n"
+    # text += "Описание: " + placemark.description + "\n"
+    # text += "Теги: " + ', '.join([tag.name for tag in tags]) + "\n"
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,

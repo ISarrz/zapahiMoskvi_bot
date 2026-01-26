@@ -61,12 +61,10 @@ async def new_placemarks_update_placemark_menu(update: Update, context: Callback
     message = context.user_data['message']
     placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
     text = ""
-    text += "Адресс: " + str(placemark.address) + "\n"
-    text += "Дата и время создания: " + str(placemark.datetime) + "\n"
-    text += "Широта: " + str(placemark.latitude) + "\n"
-    text += "Долгота: " + str(placemark.longitude) + "\n"
-    text += "Описание: " + str(placemark.description) + "\n"
-    text += "Теги: " + ", ".join(tag.name for tag in placemark.tags) + "\n"
+    text += f"`{placemark.address}`\n\n"
+    text += f"`{placemark.datetime}`\n\n"
+    text += f"Описание: `{placemark.description}`\n\n"
+    text += f"Теги: `{', '.join(tag.name for tag in placemark.tags)}`\n"
 
     keyboard = [[
         InlineKeyboardButton(text=BACK_ARROW, callback_data=BACK_ARROW),
@@ -81,7 +79,8 @@ async def new_placemarks_update_placemark_menu(update: Update, context: Callback
         chat_id=message.chat.id,
         message_id=message.message_id,
         text=text,
-        reply_markup=reply_markup
+        reply_markup=reply_markup,
+        parse_mode="MarkdownV2"
     )
 
 
@@ -89,12 +88,10 @@ async def new_placemarks_update_placemark_edit_menu(update: Update, context: Cal
     message = context.user_data['message']
     placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
     text = ""
-    text += "Адресс: " + str(placemark.address) + "\n"
-    text += "Дата и время создания: " + str(placemark.datetime) + "\n"
-    text += "Широта: " + str(placemark.latitude) + "\n"
-    text += "Долгота: " + str(placemark.longitude) + "\n"
-    text += "Описание: " + str(placemark.description) + "\n"
-    text += "Теги: " + ", ".join(tag.name for tag in placemark.tags) + "\n"
+    text += f"`{placemark.address}`\n\n"
+    text += f"`{placemark.datetime}`\n\n"
+    text += f"Описание: `{placemark.description}`\n\n"
+    text += f"Теги: `{', '.join(tag.name for tag in placemark.tags)}`\n"
 
     keyboard = [
         [
@@ -115,19 +112,18 @@ async def new_placemarks_update_placemark_edit_menu(update: Update, context: Cal
         chat_id=message.chat.id,
         message_id=message.message_id,
         text=text,
-        reply_markup=reply_markup
+        reply_markup=reply_markup,
+        parse_mode="MarkdownV2"
     )
 
 
 async def new_placemarks_send_placemark_edit_menu(update: Update, context: CallbackContext):
     placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
     text = ""
-    text += "Адресс: " + str(placemark.address) + "\n"
-    text += "Дата и время создания: " + str(placemark.datetime) + "\n"
-    text += "Широта: " + str(placemark.latitude) + "\n"
-    text += "Долгота: " + str(placemark.longitude) + "\n"
-    text += "Описание: " + str(placemark.description) + "\n"
-    text += "Теги: " + ", ".join(tag.name for tag in placemark.tags) + "\n"
+    text += f"`{placemark.address}`\n\n"
+    text += f"`{placemark.datetime}`\n\n"
+    text += f"Описание: `{placemark.description}`\n\n"
+    text += f"Теги: `{', '.join(tag.name for tag in placemark.tags)}`\n"
 
     keyboard = [
         [
@@ -147,7 +143,8 @@ async def new_placemarks_send_placemark_edit_menu(update: Update, context: Callb
     message = await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=text,
-        reply_markup=reply_markup
+        reply_markup=reply_markup,
+        parse_mode="MarkdownV2"
     )
     context.user_data['message'] = message
 

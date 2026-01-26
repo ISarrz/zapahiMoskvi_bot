@@ -57,13 +57,13 @@ async def approved_placemarks_update_placemarks_menu(update: Update, context: Ca
 async def approved_placemarks_update_placemark_info(update: Update, context: CallbackContext):
     message = context.user_data['admin_panel_message']
     placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
+
     text = ""
-    text += "Адресс: `" + str(placemark.address) + "`\n"
-    text += "Дата и время создания: `" + str(placemark.datetime) + "`\n"
-    text += "Широта: `" + str(placemark.latitude) + "`\n"
-    text += "Долгота: `" + str(placemark.longitude) + "`\n"
-    text += "Описание: `" + str(placemark.description) + "`\n"
-    text += "Теги: `" + ", ".join(tag.name for tag in placemark.tags) + "`\n"
+    text += f"`{placemark.address}`\n\n"
+    text += f"`{placemark.datetime}`\n\n"
+    text += f"Описание: `{placemark.description}`\n\n"
+    text += f"Теги: `{', '.join(tag.name for tag in placemark.tags)}`\n"
+
 
     keyboard = [[
         InlineKeyboardButton(text=BACK_ARROW, callback_data=BACK_ARROW)
