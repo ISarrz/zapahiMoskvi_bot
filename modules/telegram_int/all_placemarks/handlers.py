@@ -5,7 +5,7 @@ from modules.logger.logger import async_logger
 
 @async_logger
 async def all_placemarks_handler(update: Update, context: CallbackContext) -> int:
-    text = "ССЫЛКА"
+    text = "Все метки можно посмотреть здесь: http://87.251.78.183/"
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
