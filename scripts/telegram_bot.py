@@ -70,7 +70,7 @@ async def get_chat_id(update: Update, context: CallbackContext):
 @async_logger
 async def all_placemarks(update: Update, context: CallbackContext):
     User.safe_insert(telegram_id=update.effective_user.id)
-    await update.message.reply_text(text="ССЫЛКА НА КАРТУ")
+    await update.message.reply_text(text="Все метки можно посмотреть здесь: http://87.251.78.183/")
 
 
 def main():
