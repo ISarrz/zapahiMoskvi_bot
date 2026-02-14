@@ -4,10 +4,18 @@ from flask import Flask, jsonify, Response
 
 app = Flask(__name__)
 
+# Базовая директория проекта (где лежит map_server.py)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATABASE_PATH = os.path.join(BASE_DIR, 'data', "test_database.db")
+
+# Реальная база бота: /root/zapahiMoskvi_bot/data/database.db
+DATABASE_PATH = os.path.join(BASE_DIR, "data", "database.db")
+
 
 def get_conn():
+    """
+    Открываем соединение с БД бота.
+    ВАЖНО: и карта, и телеграм-бот должны смотреть в один и тот же файл.
+    """
     conn = sqlite3.connect(DATABASE_PATH)
     conn.row_factory = sqlite3.Row
     return conn
@@ -15,9 +23,9 @@ def get_conn():
 
 def ensure_placemarks_table_exists():
     """
-    На всякий случай создаём таблицу placemarks, если её нет.
-    Схема скопирована из DB._create_placemarks_table().
-    Данные НЕ трогаем.
+    Опциональная инициализация таблицы placemarks, если её нет.
+    Схема соответствует DB._create_placemarks_table из проектного кода.
+    В проде, если БД уже создаётся основным кодом бота, этот шаг не обязателен.
     """
     conn = get_conn()
     cur = conn.cursor()
@@ -43,8 +51,11 @@ def ensure_placemarks_table_exists():
 @app.route("/api/placemarks")
 def api_placemarks():
     """
-    Отдаём все точки с координатами:
+    Отдаём все ОДОБРЕННЫЕ точки с координатами:
     [{id, lat, lon, address, description, datetime, status}, ...]
+
+    ВАЖНО: на публичной карте показываем только status = 'approved',
+    чтобы учитывалась модерация.
     """
     conn = get_conn()
     cur = conn.cursor()
@@ -53,8 +64,9 @@ def api_placemarks():
         """
         SELECT id, datetime, address, latitude, longitude, description, status
         FROM placemarks
-        WHERE latitude IS NOT NULL
-          AND longitude IS NOT NULL
+        WHERE status = 'approved'
+          AND latitude IS NOT NULL AND latitude <> ''
+          AND longitude IS NOT NULL AND longitude <> ''
         """
     )
     rows = cur.fetchall()
@@ -70,7 +82,8 @@ def api_placemarks():
             lat = float(raw_lat.replace(",", "."))
             lon = float(raw_lon.replace(",", "."))
         except ValueError:
-            continue  # пропускаем битые значения
+            # Пропускаем битые значения
+            continue
 
         data.append(
             {
@@ -203,7 +216,8 @@ def index():
 
 
 if __name__ == "__main__":
+    # Локальный запуск для отладки
     ensure_placemarks_table_exists()
-    print("Используем базу:", database_path)
+    print("Используем базу:", DATABASE_PATH)
     app.run(debug=True)
 
