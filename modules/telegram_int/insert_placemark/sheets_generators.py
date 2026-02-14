@@ -15,10 +15,16 @@ async def placemark_inserter_get_categories_sheets(update: Update, context: Call
     categories = Category.approved_and_user(user.id)
     sheets = []
     for category in categories:
-        if not sheets or len(sheets[-1]) >= MAX_CATEGORIES_SHEET_LENGTH:
-            sheets.append([])
+        if not sheets:
+            sheets.append([[]])
+        if len(sheets[-1]) >= MAX_CATEGORIES_SHEET_LENGTH and len(sheets[-1][-1]) >= 2:
+            sheets.append([[]])
 
-        sheets[-1].append([InlineKeyboardButton(text=category.name, callback_data=category.id)])
+        if len(sheets[-1][-1]) >= 2:
+            sheets[-1].append([])
+
+
+        sheets[-1][-1].append(InlineKeyboardButton(text=category.name, callback_data=category.id))
 
     for i in range(len(sheets)):
         if len(sheets) > 1:
@@ -55,21 +61,30 @@ async def placemark_inserter_get_tags_sheets(update: Update, context: CallbackCo
 
     sheets = []
     for tag in tags:
-        if not sheets or len(sheets[-1]) >= MAX_CATEGORIES_SHEET_LENGTH:
-            sheets.append([])
+        if not sheets:
+            sheets.append([[]])
+        if len(sheets[-1]) >= MAX_CATEGORIES_SHEET_LENGTH and len(sheets[-1][-1]) >= 2:
+            sheets.append([[]])
+
+        if len(sheets[-1][-1]) >= 2:
+            sheets[-1].append([])
+
+
+
+
         text  = tag.name
         if tag.id in context.user_data["tags"]:
             text += " " + SUBMIT
 
-        sheets[-1].append([InlineKeyboardButton(text=text, callback_data=tag.id)])
+        sheets[-1][-1].append(InlineKeyboardButton(text=text, callback_data=tag.id))
 
     for i in range(len(sheets)):
         if len(sheets) > 1:
             sheets[i].append([
-                InlineKeyboardButton(text=LEFT_ARROW, callback_data=LEFT_ARROW),
                 InlineKeyboardButton(text=BACK_ARROW, callback_data=BACK_ARROW),
-                InlineKeyboardButton(text=ADD, callback_data=ADD),
                 InlineKeyboardButton(text="Пропустить" if not context.user_data["tags"] else "Подтвердить", callback_data="skip"),
+                InlineKeyboardButton(text=LEFT_ARROW, callback_data=LEFT_ARROW),
+                InlineKeyboardButton(text=ADD, callback_data=ADD),
                 InlineKeyboardButton(text=RIGHT_ARROW, callback_data=RIGHT_ARROW),
             ])
         else:

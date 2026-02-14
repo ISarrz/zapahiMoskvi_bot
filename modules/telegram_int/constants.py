@@ -3,12 +3,13 @@ MAX_CATEGORIES_SHEET_LENGTH = 5
 
 LEFT_ARROW = "←"
 RIGHT_ARROW = "→"
-BACK_ARROW = "↵"
+BACK_ARROW = "Назад"
 ADD = "+"
 EDIT = "✎"
 DELETE = "❌"
 SUBMIT = "✓︎"
 CANCEL = "⨯"
+CLOCK = "⏰"
 
 MAIN_MENU_HANDLER = 0
 

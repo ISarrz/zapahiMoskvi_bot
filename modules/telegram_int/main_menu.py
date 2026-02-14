@@ -101,7 +101,7 @@ async def start(update: Update, context: CallbackContext):
 
     job = context.job_queue.run_repeating(
         send_notifications,
-        interval=20,
+        interval=60,
         first=0,
         chat_id=chat_id
     )

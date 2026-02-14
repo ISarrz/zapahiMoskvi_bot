@@ -40,16 +40,16 @@ async def insert_placemark_location_handler(update: Update, context: CallbackCon
     context.user_data["longitude"] = longitude
     context.user_data["address"] = get_address(latitude, longitude)
 
-    sheet = [[
-        InlineKeyboardButton(text=BACK_ARROW, callback_data=BACK_ARROW)
-    ]]
-
-    reply_markup = InlineKeyboardMarkup(sheet)
     await update.message.reply_text(
 
-        text=("Ваша метка: " + context.user_data[
-            "address"] + "\n\n" + "Опишите запах, который вы хотите зафиксировать. Вы можете сделать описание развернутым или совсем коротким, обратиться к своим ассоциациям и воспоминаниям об этом запахе или попытаться разобраться, из каких нот он состоит."),
-        reply_markup=reply_markup
+        text=("✏️Чем пахнет?\n\n"
+              "Отправьте сообщение с описанием запаха, "
+              "который вы хотите зафиксировать. "
+              "Вы можете сделать описание развернутым или совсем коротким, "
+              "обратиться к своим ассоциациям и "
+              "воспоминаниям об этом запахе или "
+              "попытаться разобраться, из каких нот он состоит."),
+        reply_markup=None
     )
 
     return PLACEMARK_INSERTER_DESCRIPTION_HANDLER
@@ -61,18 +61,8 @@ async def insert_placemark_description_handler(update: Update, context: Callback
     context.user_data["description"] = description
     context.user_data["tags"] = []
 
-
-
-    # ВОТ ТУТ ПРОПУСК ЧАСТИ С ТЕГАМИ
-    # ААААААААААААААААААААААААААААААААААААААААААААААААААА
-    # await placemark_inserter_send_categories_menu(update, context)
-    # return PLACEMARK_INSERTER_CATEGORIES_HANDLER
-
-    await insert_user_placemark(update, context)
-    context.user_data["tags"] = []
-
-    return MAIN_MENU_HANDLER
-
+    await placemark_inserter_send_categories_menu(update, context)
+    return PLACEMARK_INSERTER_CATEGORIES_HANDLER
 
 
 @async_logger

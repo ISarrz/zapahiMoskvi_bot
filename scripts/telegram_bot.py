@@ -23,6 +23,11 @@ from modules.config.config import get_telegram_message
 from modules.telegram_int.notifications.handlers import notifications_handler
 
 
+async def get_chat_id(update: Update, context:CallbackContext):
+    chat_id = update.effective_chat.id
+    await update.message.reply_text(f"ID этого чата: {chat_id}")
+
+
 @async_logger
 async def send_logs(context: CallbackContext):
     chat_id = get_config_field("logs_chat_id")
@@ -70,7 +75,7 @@ async def get_chat_id(update: Update, context: CallbackContext):
 @async_logger
 async def all_placemarks(update: Update, context: CallbackContext):
     User.safe_insert(telegram_id=update.effective_user.id)
-    await update.message.reply_text(text="Все метки можно посмотреть здесь: http://87.251.78.183/")
+    await update.message.reply_text(text="Все метки можно посмотреть здесь: http://212.193.4.191/")
 
 
 def main():
@@ -78,7 +83,7 @@ def main():
     application = ApplicationBuilder().token(token).build()
 
     application.add_handler(ConversationHandler_main_menu, 1)
-    application.add_handler(CallbackQueryHandler(notifications_handler, pattern="настройка напоминаний"), 2)
+    application.add_handler(CommandHandler("get_chat_id", get_chat_id))
     application.add_handler(CommandHandler("get_db", send_db))
     job_deque = application.job_queue
     job_deque.run_repeating(send_logs, 20)

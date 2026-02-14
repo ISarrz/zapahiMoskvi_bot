@@ -8,26 +8,30 @@ from geopy.geocoders import Nominatim
 
 
 def get_address(latitude: float, longitude: float):
-    geolocator = Nominatim(user_agent="my_geocoder")
+    try:
+        geolocator = Nominatim(user_agent="my_geocoder")
 
-    location = geolocator.reverse((latitude, longitude), language="ru")
-    res = []
+        location = geolocator.reverse((latitude, longitude), language="ru")
+        res = []
 
-    if location.raw["address"].get("suburb"):
-        res.append(location.raw["address"]["suburb"])
+        if location.raw["address"].get("suburb"):
+            res.append(location.raw["address"]["suburb"])
 
-    if location.raw["address"].get("road"):
-        res.append(location.raw["address"]["road"])
+        if location.raw["address"].get("road"):
+            res.append(location.raw["address"]["road"])
 
-    if location.raw["address"].get("house_number"):
-        res.append(location.raw["address"]["house_number"])
+        if location.raw["address"].get("house_number"):
+            res.append(location.raw["address"]["house_number"])
 
-    if not res:
-        res.append("Неизвестно")
+        if not res:
+            res.append("Неизвестно")
 
-    address = "; ".join(res)
+        address = "; ".join(res)
 
-    return address
+        return address
+    
+    except Exception as e:
+        return "Неизвестно"
 
 
 
@@ -49,12 +53,6 @@ async def insert_user_placemark(update: Update, context: CallbackContext):
     text += f"Описание: {placemark.description}\n\n"
     text += f"Теги: {', '.join(tag.name for tag in placemark.tags)}\n"
 
-    # text = "Ваша геометка добавлена:\n"
-    # text += "Адресс: " + placemark.address + "\n"
-    # text += "Долгота: " + placemark.latitude + "\n"
-    # text += "Широта: " + placemark.longitude + "\n"
-    # text += "Описание: " + placemark.description + "\n"
-    # text += "Теги: " + ', '.join([tag.name for tag in tags]) + "\n"
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,

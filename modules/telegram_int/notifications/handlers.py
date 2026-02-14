@@ -24,6 +24,7 @@ EDIT = "✎"
 DELETE = "❌"
 SUBMIT = "✓︎"
 CANCEL = "⨯"
+CLOCK = "⏰"
 
 notifications_states = dict()
 
@@ -44,16 +45,11 @@ async def send_notifications(context: CallbackContext):
             if weekday == notification.weekday and hour == int(notification.time.split(":")[0]):
                 if not notifications_states[str(user.id) + " " + str(weekday) + " " + str(hour)]:
                     try:
-                        reply_keyboard = [
-                            [InlineKeyboardButton(text="настроить напоминания", callback_data="настройка напоминаний")]
-                        ]
-                        keyboard_markup = InlineKeyboardMarkup(reply_keyboard)
-
                         text = get_telegram_message("notification")
                         message = await context.bot.send_message(
                             chat_id=user.telegram_id,
                             text=text,
-                            reply_markup=keyboard_markup,
+                            reply_markup=None,
                             parse_mode="Markdown"
                         )
 
@@ -87,7 +83,7 @@ def get_weekdays_sheet(update: Update, context: CallbackContext):
 
     for i in range(len(weekdays_numbers)):
         if i in user_weekdays:
-            keyboard.append([InlineKeyboardButton(f"{weekdays_numbers[i]} {SUBMIT}", callback_data=i)])
+            keyboard.append([InlineKeyboardButton(f"{weekdays_numbers[i]} {CLOCK}", callback_data=i)])
         else:
             keyboard.append([InlineKeyboardButton(f"{weekdays_numbers[i]} ", callback_data=i)], )
 
@@ -203,14 +199,13 @@ def get_time_inline_button(user: User, weekday: int, time):
 
     for notification in notifications:
         if weekday == notification.weekday and time == notification.time:
-            return InlineKeyboardButton(text=time + " " + SUBMIT, callback_data="delete " + str(notification.id))
+            return InlineKeyboardButton(text=time + " " + CLOCK, callback_data="delete " + str(notification.id))
 
     return InlineKeyboardButton(text=time, callback_data="add " + str(weekday) + " " + time)
 
 
 @logger
 def get_time_sheet(user: User, context: CallbackContext):
-    notifications = user.notifications
     weekday = int(context.user_data['weekday'])
     keyboard = [
         [
