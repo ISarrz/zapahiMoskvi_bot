@@ -72,11 +72,6 @@ async def get_chat_id(update: Update, context: CallbackContext):
     await update.message.reply_text(text=str(chat_id))
 
 
-@async_logger
-async def all_placemarks(update: Update, context: CallbackContext):
-    User.safe_insert(telegram_id=update.effective_user.id)
-    await update.message.reply_text(text="Все метки можно посмотреть здесь: http://212.193.4.191/")
-
 
 def main():
     token = get_config_field("telegram_api_token")
