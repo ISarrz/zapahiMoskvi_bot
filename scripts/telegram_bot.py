@@ -82,7 +82,7 @@ def main():
     application.add_handler(CommandHandler("get_db", send_db))
     job_deque = application.job_queue
     job_deque.run_repeating(send_logs, 20)
-    job_deque.run_once(send_reboot_notifications, 0)
+    job_deque.run_once(send_reboot_notifications, 10)
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 

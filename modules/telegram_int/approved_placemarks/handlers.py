@@ -8,8 +8,10 @@ from modules.telegram_int.approved_placemarks.sheets_generators import \
 from modules.telegram_int.approved_placemarks.messages_interactions import (
     approved_placemarks_update_placemark_info,
     approved_placemarks_update_placemarks_menu,
-    approved_placemarks_send_placemarks_menu
+    approved_placemarks_send_placemarks_menu,
+    approved_placemarks_update_reject_menu
 )
+from modules.database.placemark.placemark import Placemark
 
 
 @async_logger
@@ -76,5 +78,32 @@ async def approved_placemarks_placemark_info_handler(update: Update, context: Ca
         await approved_placemarks_update_placemarks_menu(update, context)
 
         return APPROVED_PLACEMARKS_HANDLER
+
+    elif income == "reject":
+        await approved_placemarks_update_reject_menu(update, context)
+
+        return APPROVED_PLACEMARKS_REJECT_HANDLER
+
+    return ConversationHandler.END
+
+
+@async_logger
+async def approved_placemarks_reject_handler(update: Update, context: CallbackContext):
+    query = update.callback_query
+    await query.answer()
+    income = query.data
+
+    if income == SUBMIT:
+        placemark = Placemark(id=int(context.user_data['selected_placemark_id']))
+        placemark.reject()
+
+        await approved_placemarks_update_placemarks_menu(update, context)
+
+        return APPROVED_PLACEMARKS_HANDLER
+
+    elif income == CANCEL:
+        await approved_placemarks_update_placemark_info(update, context)
+
+        return APPROVED_PLACEMARKS_PLACEMARK_INFO_HANDLER
 
     return ConversationHandler.END

@@ -33,27 +33,3 @@ def get_address(latitude: float, longitude: float):
     return address
 
 
-
-async def insert_user_placemark(update: Update, context: CallbackContext):
-    tags = [Tag(id=tag_id) for tag_id in context.user_data["tags"]]
-    user = User(telegram_id=update.effective_user.id)
-
-    placemark = user.insert_placemark(datetime=now(), address=context.user_data["address"],
-                                      latitude=context.user_data["latitude"],
-                                      longitude=context.user_data["longitude"],
-                                      description=context.user_data["description"])
-
-    for tag in tags:
-        placemark.insert_tag(tag=tag)
-    text = "Ваша геометка добавлена:\n"
-    text += "Адресс: " + placemark.address + "\n"
-    text += "Долгота: " + placemark.latitude + "\n"
-    text += "Широта: " + placemark.longitude + "\n"
-    text += "Описание: " + placemark.description + "\n"
-    text += "Теги: " + ', '.join([tag.name for tag in tags]) + "\n"
-
-    await context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text=text,
-        reply_markup=None
-    )

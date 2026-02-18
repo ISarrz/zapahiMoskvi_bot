@@ -10,6 +10,7 @@ from telegram import ReplyKeyboardMarkup, Update
 
 from modules.logger.logger import async_logger
 from modules.database.user.user import User
+from modules.telegram_int.keyboard import get_main_keyboard
 
 from modules.telegram_int.constants import *
 from modules.telegram_int.about.handlers import about_handler
@@ -57,6 +58,7 @@ from modules.telegram_int.new_placemarks.handlers import (
     new_placemarks_tag_edit_handler,
     new_placemarks_delete_tag_handler,
     new_placemarks_approve_tag_handler,
+    new_placemarks_tag_category_handler,
 
 )
 from modules.telegram_int.categories_and_tags.handlers import (
@@ -76,7 +78,8 @@ from modules.telegram_int.categories_and_tags.handlers import (
 from modules.telegram_int.approved_placemarks.handlers import (
     approved_placemarks_handler,
     approved_placemarks_selector_handler,
-    approved_placemarks_placemark_info_handler
+    approved_placemarks_placemark_info_handler,
+    approved_placemarks_reject_handler
 )
 
 jobs = {}
@@ -88,11 +91,12 @@ from modules.telegram_int.notifications.handlers import send_notifications
 async def start(update: Update, context: CallbackContext):
     User.safe_insert(update.effective_user.id)
     user = User(telegram_id=int(update.effective_user.id))
-    text = ("Привет! Это бот, отслеживающий запахи Москвы. "
-            "Здесь вы можете оставить отзывы на ароматы, которые услышали в разных районах города. "
-            "Попробуйте прислушаться к запахам вокруг и опишите их, а если возникнут затруднения — обратитесь к тегам, "
-            "готовым нотам, разбитым на категории."
-            "\n\nЧтобы добавить первый ольфакторный отзыв, нажмите кнопку «Добавить метку».")
+    text = ("⭐️ Привет! Это бот, отслеживающий запахи Москвы. Здесь вы можете оставить отзывы на запахи, "
+            "которые услышали в разных районах города, и стать одним из многих его голосов (или носов?). "
+            "Ваши отметки составят ольфакторную (т.е. обонятельную) карту города — коллективную, но при этом очень личную.\n\n"
+            "А пока, попробуйте прислушаться к запахам вокруг и опишите их, а если возникнут затруднения — "
+            "обратитесь к тегам, готовым нотам, разбитым на категории.\n\n"
+            "Чтобы добавить свой первый отзыв, нажмите кнопку «Добавить метку».")
 
     chat_id = update.effective_chat.id
 
@@ -248,6 +252,9 @@ ConversationHandler_main_menu = ConversationHandler(
         NEW_PLACEMARKS_PLACEMARK_NEW_TAG_APPROVE_HANDLER: COMMON_HANDLERS + [
             CallbackQueryHandler(new_placemarks_approve_tag_handler)
         ],
+        NEW_PLACEMARKS_PLACEMARK_NEW_TAG_CATEGORY_HANDLER: COMMON_HANDLERS + [
+            CallbackQueryHandler(new_placemarks_tag_category_handler)
+        ],
         CATEGORIES_AND_TAGS_CATEGORIES_MENU_HANDLER: COMMON_HANDLERS + [
             CallbackQueryHandler(categories_and_tags_categories_handler)
         ],
@@ -280,6 +287,9 @@ ConversationHandler_main_menu = ConversationHandler(
         ],
         APPROVED_PLACEMARKS_PLACEMARK_INFO_HANDLER: COMMON_HANDLERS + [
             CallbackQueryHandler(approved_placemarks_placemark_info_handler)
+        ],
+        APPROVED_PLACEMARKS_REJECT_HANDLER: COMMON_HANDLERS + [
+            CallbackQueryHandler(approved_placemarks_reject_handler)
         ]
     },
 

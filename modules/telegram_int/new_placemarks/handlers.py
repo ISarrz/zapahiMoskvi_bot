@@ -19,8 +19,9 @@ from modules.telegram_int.new_placemarks.messages_interactions import (
     new_placemarks_update_tags_menu,
     new_placemarks_update_tag_menu,
     new_placemarks_send_tag_menu,
-    new_placemarks_send_placemarks_menu
-
+    new_placemarks_send_placemarks_menu,
+    new_placemarks_send_tag_categories_menu,
+    new_placemarks_update_tag_categories_menu
 )
 # from modules.telegram_int.
 from modules.database.placemark.tag import Tag
@@ -232,7 +233,13 @@ async def new_placemarks_placemark_edit_location_handler(update: Update, context
     placemark.address = get_address(latitude, longitude)
 
     context.user_data["placemark_changed"] = True
-    message = context.user_data["message"]
+
+    # Отправляем сообщение об успешном изменении
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="✅ Геолокация успешно изменена!",
+        reply_markup=None
+    )
 
     await new_placemarks_send_placemark_edit_menu(update, context)
     return NEW_PLACEMARKS_PLACEMARK_EDIT_HANDLER
@@ -244,7 +251,13 @@ async def new_placemarks_placemark_edit_address_handler(update: Update, context:
     placemark.address = address
 
     context.user_data["placemark_changed"] = True
-    message = context.user_data["message"]
+
+    # Отправляем сообщение об успешном изменении
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="✅ Адрес успешно изменен!",
+        reply_markup=None
+    )
 
     await new_placemarks_send_placemark_edit_menu(update, context)
     return NEW_PLACEMARKS_PLACEMARK_EDIT_HANDLER
@@ -256,6 +269,13 @@ async def new_placemarks_placemark_edit_description_handler(update: Update, cont
     placemark.description = description
 
     context.user_data['placemark_changed'] = True
+
+    # Отправляем сообщение об успешном изменении
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="✅ Описание успешно изменено!",
+        reply_markup=None
+    )
 
     await new_placemarks_send_placemark_edit_menu(update, context)
     return NEW_PLACEMARKS_PLACEMARK_EDIT_HANDLER
@@ -335,6 +355,10 @@ async def new_placemarks_tag_menu_handler(update: Update, context: CallbackConte
 
         return NEW_PLACEMARKS_PLACEMARK_EDIT_HANDLER
 
+    elif income == "category":
+        await new_placemarks_update_tag_categories_menu(update, context)
+        return NEW_PLACEMARKS_PLACEMARK_NEW_TAG_CATEGORY_HANDLER
+
     elif income == SUBMIT:
         tag = Tag(id=int(context.user_data['tag_id']))
 
@@ -381,6 +405,7 @@ async def new_placemarks_tag_menu_handler(update: Update, context: CallbackConte
         return NEW_PLACEMARKS_PLACEMARK_NEW_TAG_DELETE_HANDLER
 
     return ConversationHandler.END
+
 
 async def new_placemarks_tag_edit_handler(update: Update, context: CallbackContext):
     name = update.message.text
@@ -430,4 +455,44 @@ async def new_placemarks_approve_tag_handler(update: Update, context: CallbackCo
     else:
         await new_placemarks_update_tag_menu(update, context)
 
+        return NEW_PLACEMARKS_PLACEMARK_NEW_TAG_HANDLER
+
+
+async def new_placemarks_tag_category_handler(update: Update, context: CallbackContext):
+    query = update.callback_query
+    await query.answer()
+    income = query.data
+
+    if income == BACK_ARROW:
+        await new_placemarks_update_tag_menu(update, context)
+        return NEW_PLACEMARKS_PLACEMARK_NEW_TAG_HANDLER
+
+    elif income == "no_category":
+        # Удалить тег из всех категорий
+        tag = Tag(id=int(context.user_data['tag_id']))
+        category_id = tag.category_id
+        if category_id != -1:
+            from modules.database.placemark.category import Category
+            category = Category(id=category_id)
+            tag.delete_category(category)
+
+        await new_placemarks_update_tag_menu(update, context)
+        return NEW_PLACEMARKS_PLACEMARK_NEW_TAG_HANDLER
+
+    else:
+        # Назначить тег в категорию
+        from modules.database.placemark.category import Category
+        tag = Tag(id=int(context.user_data['tag_id']))
+
+        # Сначала удаляем из старой категории
+        old_category_id = tag.category_id
+        if old_category_id != -1:
+            old_category = Category(id=old_category_id)
+            tag.delete_category(old_category)
+
+        # Добавляем в новую категорию
+        new_category = Category(id=int(income))
+        tag.insert_category(new_category)
+
+        await new_placemarks_update_tag_menu(update, context)
         return NEW_PLACEMARKS_PLACEMARK_NEW_TAG_HANDLER

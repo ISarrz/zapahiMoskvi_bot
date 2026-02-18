@@ -5,12 +5,15 @@ from modules.logger.logger import async_logger
 
 @async_logger
 async def all_placemarks_handler(update: Update, context: CallbackContext) -> int:
-    text = "Все метки можно посмотреть здесь: http://212.193.4.191/"
+    text = ("🗺️ Метки, оставленные Вами и другими пользователями, можно посмотреть на карте проекта здесь — "
+            "http://212.193.4.191/\n\n"
+            "<i>На карту попадают геометки, прошедшие модерацию.</i>")
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=text,
-        reply_markup=None
+        reply_markup=None,
+        parse_mode="HTML"
     )
 
     return MAIN_MENU_HANDLER

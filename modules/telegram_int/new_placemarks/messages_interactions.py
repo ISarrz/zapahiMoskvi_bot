@@ -95,7 +95,7 @@ async def new_placemarks_update_placemark_edit_menu(update: Update, context: Cal
 
     keyboard = [
         [
-            InlineKeyboardButton(text="Адресс", callback_data="address"),
+            InlineKeyboardButton(text="Адрес", callback_data="address"),
             InlineKeyboardButton(text="Геометка", callback_data="geotag"),
             InlineKeyboardButton(text="Описание", callback_data="description"),
             InlineKeyboardButton(text="Теги", callback_data="tags"),
@@ -127,7 +127,7 @@ async def new_placemarks_send_placemark_edit_menu(update: Update, context: Callb
 
     keyboard = [
         [
-            InlineKeyboardButton(text="Адресс", callback_data="address"),
+            InlineKeyboardButton(text="Адрес", callback_data="address"),
             InlineKeyboardButton(text="Геометка", callback_data="geotag"),
             InlineKeyboardButton(text="Описание", callback_data="description"),
             InlineKeyboardButton(text="Теги", callback_data="tags"),
@@ -216,12 +216,14 @@ async def new_placemarks_update_tag_menu(update: Update, context: CallbackContex
     if tag.status == "approved":
         sheet = [[
             InlineKeyboardButton(text=BACK_ARROW, callback_data=BACK_ARROW),
+            InlineKeyboardButton(text="Категория", callback_data="category"),
             InlineKeyboardButton(text=DELETE, callback_data=DELETE),
         ]]
     else:
         sheet = [[
             InlineKeyboardButton(text=BACK_ARROW, callback_data=BACK_ARROW),
             InlineKeyboardButton(text=SUBMIT, callback_data=SUBMIT),
+            InlineKeyboardButton(text="Категория", callback_data="category"),
             InlineKeyboardButton(text=EDIT, callback_data=EDIT),
             InlineKeyboardButton(text=DELETE, callback_data=DELETE),
         ]]
@@ -232,5 +234,44 @@ async def new_placemarks_update_tag_menu(update: Update, context: CallbackContex
         chat_id=message.chat.id,
         message_id=message.message_id,
         text=text,
+        reply_markup=reply_markup
+    )
+
+
+async def new_placemarks_send_tag_categories_menu(update: Update, context: CallbackContext):
+    categories = Category.approved_and_user(0)  # Все одобренные категории
+
+    sheet = []
+    for category in categories:
+        sheet.append([InlineKeyboardButton(text=category.name, callback_data=category.id)])
+
+    sheet.append([InlineKeyboardButton(text=BACK_ARROW, callback_data=BACK_ARROW)])
+    sheet.append([InlineKeyboardButton(text="Без категории", callback_data="no_category")])
+
+    reply_markup = InlineKeyboardMarkup(sheet)
+    message = await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="Выберите категорию для тега",
+        reply_markup=reply_markup
+    )
+    context.user_data['message'] = message
+
+
+async def new_placemarks_update_tag_categories_menu(update: Update, context: CallbackContext):
+    categories = Category.approved_and_user(0)  # Все одобренные категории
+
+    sheet = []
+    for category in categories:
+        sheet.append([InlineKeyboardButton(text=category.name, callback_data=category.id)])
+
+    sheet.append([InlineKeyboardButton(text=BACK_ARROW, callback_data=BACK_ARROW)])
+    sheet.append([InlineKeyboardButton(text="Без категории", callback_data="no_category")])
+
+    reply_markup = InlineKeyboardMarkup(sheet)
+    message = context.user_data['message']
+    await context.bot.edit_message_text(
+        chat_id=message.chat.id,
+        message_id=message.message_id,
+        text="Выберите категорию для тега",
         reply_markup=reply_markup
     )

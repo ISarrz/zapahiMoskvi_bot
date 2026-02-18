@@ -1,10 +1,12 @@
-from telegram import Update
+from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import CallbackContext
 from modules.database.user.user import User
 from modules.database.placemark.tag import Tag
 
 from modules.time.time import now
 from geopy.geocoders import Nominatim
+import html
+from modules.telegram_int.keyboard import get_main_keyboard
 
 
 def get_address(latitude: float, longitude: float):
@@ -47,15 +49,21 @@ async def insert_user_placemark(update: Update, context: CallbackContext):
     for tag in tags:
         placemark.insert_tag(tag=tag)
 
-    text = "Ваша геометка добавлена:\n"
-    text += f"{placemark.address}\n\n"
-    text += f"{placemark.datetime}\n\n"
-    text += f"Описание: {placemark.description}\n\n"
-    text += f"Теги: {', '.join(tag.name for tag in placemark.tags)}\n"
+    address = html.escape(str(placemark.address))
+    description = html.escape(str(placemark.description))
+    tags_text = ", ".join(html.escape(tag.name) for tag in placemark.tags)
+    datetime_text = html.escape(str(placemark.datetime))
 
+    text = "📌 Ваша геометка и отзыв добавлены:\n\n"
+    text += f"{address}\n"
+    text += f"<i>{datetime_text}</i>\n\n"
+    text += f"Описание: {description}\n"
+    text += f"Теги: {tags_text}\n\n"
+    text += "<i>Метка появится на карте, когда пройдет модерацию.</i>"
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=text,
-        reply_markup=None
+        reply_markup=get_main_keyboard(user),
+        parse_mode="HTML"
     )

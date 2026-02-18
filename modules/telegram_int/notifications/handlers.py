@@ -8,10 +8,12 @@ from telegram.error import Forbidden, TelegramError
 from modules.database.user.notification import Notification
 from modules.logger.logger import logger, async_logger
 from modules.database.user.user import User
-from modules.telegram_int.constants import WEEKDAYS_HANDLER, HOURS_HANDLER, NOTIFICATION_HANDLER
+from modules.telegram_int.constants import WEEKDAYS_HANDLER, HOURS_HANDLER, NOTIFICATION_HANDLER, MAIN_MENU_HANDLER
 from modules.config.config import get_telegram_message
 from modules.time.time import now_data
 from modules.config.config import get_notification_message, set_notification_message
+from modules.telegram_int.keyboard import get_main_keyboard
+import random
 
 
 
@@ -87,6 +89,33 @@ def get_weekdays_sheet(update: Update, context: CallbackContext):
         else:
             keyboard.append([InlineKeyboardButton(f"{weekdays_numbers[i]} ", callback_data=i)], )
 
+    # Проверяем, были ли изменения
+    has_changes = False
+    if 'original_notifications' in context.user_data:
+        current_notifications = set()
+        for notification in user.notifications:
+            current_notifications.add((notification.weekday, notification.time))
+
+        has_changes = context.user_data['original_notifications'] != current_notifications
+
+    # Добавляем кнопки управления
+    keyboard.append([
+        InlineKeyboardButton(text="Каждый день", callback_data="everyday"),
+    ])
+
+    # Добавляем кнопку "Очистить" если есть уведомления
+    has_notifications = len(user.notifications) > 0
+    if has_notifications:
+        keyboard.append([
+            InlineKeyboardButton(text="Очистить", callback_data="clear_all"),
+        ])
+
+    # Показываем кнопку "Подтвердить" только если есть изменения
+    if has_changes:
+        keyboard.append([
+            InlineKeyboardButton(text="Подтвердить", callback_data="confirm"),
+        ])
+
     return keyboard
 
 
@@ -106,6 +135,12 @@ async def notifications_handler(update: Update, context: CallbackContext):
 
     except Exception:
         pass
+
+    # Сохраняем исходное состояние уведомлений
+    user = User(telegram_id=update.effective_user.id)
+    context.user_data['original_notifications'] = set()
+    for notification in user.notifications:
+        context.user_data['original_notifications'].add((notification.weekday, notification.time))
 
     await send_weekdays(update, context)
     return WEEKDAYS_HANDLER
@@ -140,6 +175,46 @@ async def weekdays_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
     income = query.data
+
+    if income == "everyday":
+        # Удаляем все существующие уведомления
+        user = User(telegram_id=update.effective_chat.id)
+        for db_notification in user.notifications:
+            notification = Notification(id=db_notification.id)
+            notification.delete()
+
+        # Добавляем уведомление на каждый день в 12:00
+        for weekday in range(7):
+            Notification.insert(user.id, weekday, "12:00")
+
+
+        await update_weekdays(update, context)
+        return WEEKDAYS_HANDLER
+
+    elif income == "clear_all":
+        # Удаляем все уведомления
+        user = User(telegram_id=update.effective_chat.id)
+        for db_notification in user.notifications:
+            notification = Notification(id=db_notification.id)
+            notification.delete()
+
+        await update_weekdays(update, context)
+        return WEEKDAYS_HANDLER
+
+    elif income == "confirm":
+        # Отправляем сообщение подтверждения
+        user = User(telegram_id=update.effective_chat.id)
+        message = context.user_data['message']
+
+        # Удаляем inline-сообщение
+        await context.bot.edit_message_text(
+            chat_id=message.chat.id,
+            message_id=message.message_id,
+            text="✅ Напоминания успешно настроены!",
+            reply_markup=None
+        )
+
+        return MAIN_MENU_HANDLER
 
     context.user_data['weekday'] = income
     await update_time(update, context)

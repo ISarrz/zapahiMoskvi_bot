@@ -66,7 +66,8 @@ async def approved_placemarks_update_placemark_info(update: Update, context: Cal
 
 
     keyboard = [[
-        InlineKeyboardButton(text=BACK_ARROW, callback_data=BACK_ARROW)
+        InlineKeyboardButton(text=BACK_ARROW, callback_data=BACK_ARROW),
+        InlineKeyboardButton(text="Отклонить", callback_data="reject")
     ]
     ]
 
@@ -78,4 +79,24 @@ async def approved_placemarks_update_placemark_info(update: Update, context: Cal
         text=text,
         reply_markup=reply_markup,
         parse_mode="MarkdownV2"
+    )
+
+
+async def approved_placemarks_update_reject_menu(update: Update, context: CallbackContext):
+    message = context.user_data['admin_panel_message']
+    text = "Отклонить метку?"
+    keyboard = [
+        [
+            InlineKeyboardButton(text=SUBMIT, callback_data=SUBMIT),
+            InlineKeyboardButton(text=CANCEL, callback_data=CANCEL)
+        ],
+    ]
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await context.bot.edit_message_text(
+        chat_id=message.chat.id,
+        message_id=message.message_id,
+        text=text,
+        reply_markup=reply_markup
     )

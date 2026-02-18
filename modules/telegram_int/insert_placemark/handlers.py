@@ -19,7 +19,9 @@ from modules.telegram_int.insert_placemark.messages_interactions import (
     placemark_inserter_update_categories_menu,
     placemark_inserter_send_categories_menu,
     placemark_inserter_send_tags_menu,
-    placemark_inserter_send_menu
+    placemark_inserter_send_menu,
+    placemark_inserter_update_tag_selected_menu,
+    placemark_inserter_send_tag_selected_menu
 )
 from modules.logger.logger import async_logger
 
@@ -140,7 +142,19 @@ async def insert_placemark_tags_handler(update: Update, context: CallbackContext
 
         return MAIN_MENU_HANDLER
 
+    elif income == "add_more_tags":
+        await placemark_inserter_update_categories_menu(update, context)
+
+        return PLACEMARK_INSERTER_CATEGORIES_HANDLER
+
+    elif income == "submit_placemark":
+        await insert_user_placemark(update, context)
+        context.user_data["tags"] = []
+
+        return MAIN_MENU_HANDLER
+
     elif income == ADD:
+        # Добавление тега внутри категории
         message = context.user_data['message']
 
         await context.bot.edit_message_text(
@@ -153,15 +167,23 @@ async def insert_placemark_tags_handler(update: Update, context: CallbackContext
         return PLACEMARK_INSERTER_INSERT_TAG_HANDLER
 
     else:
-        if int(income) in context.user_data["tags"]:
-            context.user_data["tags"].remove(int(income))
+        tag_id = int(income)
+        if tag_id in context.user_data["tags"]:
+            await query.answer(text="Тег уже выбран", show_alert=False)
+        elif len(context.user_data["tags"]) >= 3:
+            await query.answer(text="Можно добавить не более трех тегов", show_alert=True)
+            return PLACEMARK_INSERTER_TAGS_HANDLER
+        else:
+            context.user_data['tags'].append(tag_id)
+            await query.answer(text="Тег выбран", show_alert=False)
 
-            await placemark_inserter_update_tags_menu(update, context)
+            # Если выбрано 3 тега - автоматически отправляем метку
+            if len(context.user_data["tags"]) >= 3:
+                await insert_user_placemark(update, context)
+                context.user_data["tags"] = []
+                return MAIN_MENU_HANDLER
 
-        elif len(context.user_data["tags"]) < 3:
-            context.user_data['tags'].append(int(income))
-
-            await placemark_inserter_update_tags_menu(update, context)
+        await placemark_inserter_update_tag_selected_menu(update, context)
 
         return PLACEMARK_INSERTER_TAGS_HANDLER
 
@@ -172,9 +194,33 @@ async def insert_placemark_insert_tag_handler(update: Update, context: CallbackC
 
     user = User(telegram_id=int(update.effective_user.id))
     tag = Tag.safe_insert(name=name, user_id=user.id)
-    category = Category(id=int(context.user_data['category_id']))
-    tag.insert_category(category)
 
-    await placemark_inserter_send_tags_menu(update, context)
+    # Если тег не создан (уже существует), находим его
+    if not tag:
+        try:
+            tag = Tag(name=name)
+        except:
+            tag = None
+
+    # Добавляем тег в список выбранных, если еще не превышен лимит
+    if tag and len(context.user_data.get("tags", [])) < 3:
+        if tag.id not in context.user_data.get("tags", []):
+            context.user_data['tags'].append(tag.id)
+
+    # Привязываем тег к текущей категории
+    if tag and context.user_data.get('category_id'):
+        category = Category(id=int(context.user_data['category_id']))
+        # Проверяем, есть ли уже категория у тега
+        if tag.category_id == -1:
+            tag.insert_category(category)
+
+    # Если выбрано 3 тега - автоматически отправляем метку
+    if len(context.user_data.get("tags", [])) >= 3:
+        await insert_user_placemark(update, context)
+        context.user_data["tags"] = []
+        return MAIN_MENU_HANDLER
+
+    # Показываем меню подтверждения выбора тега
+    await placemark_inserter_send_tag_selected_menu(update, context)
 
     return PLACEMARK_INSERTER_TAGS_HANDLER
