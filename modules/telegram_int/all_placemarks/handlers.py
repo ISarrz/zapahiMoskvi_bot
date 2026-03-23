@@ -6,7 +6,7 @@ from modules.logger.logger import async_logger
 @async_logger
 async def all_placemarks_handler(update: Update, context: CallbackContext) -> int:
     text = ("🗺️ Метки, оставленные Вами и другими пользователями, можно посмотреть на карте проекта здесь — "
-            "http://zapahimap.ru/\n\n"
+            "http://212.193.4.191/\n\n"
             "<i>На карту попадают геометки, прошедшие модерацию.</i>")
 
     await context.bot.send_message(
